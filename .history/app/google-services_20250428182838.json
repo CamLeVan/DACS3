@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "810394083406",
+    "project_id": "taskmobileapp-android",
+    "storage_bucket": "taskmobileapp-android.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810394083406:android:1234567890abcdef",
+        "android_client_info": {
+          "package_name": "com.example.taskapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "810394083406-if03ct2fi3ojplu5bu6bojn5o7708367.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDummyKeyReplaceMeWithRealKey"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "810394083406-if03ct2fi3ojplu5bu6bojn5o7708367.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
