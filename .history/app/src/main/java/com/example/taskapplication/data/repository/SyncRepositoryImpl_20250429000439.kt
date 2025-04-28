@@ -274,15 +274,15 @@ class SyncRepositoryImpl @Inject constructor(
             val pendingMessages = messageDao.getPendingSyncMessages()
 
             // Thêm các loại dữ liệu khác khi cần thiết
-            val pendingReadStatuses = messageReadStatusDao.getPendingSyncReadStatuses()
-            val pendingReactions = messageReactionDao.getPendingSyncReactions()
+            // val pendingReadStatuses = messageReadStatusDao.getPendingSyncReadStatuses()
+            // val pendingReactions = messageReactionDao.getPendingSyncReactions()
 
             // Kiểm tra nếu có bất kỳ thay đổi nào đang chờ xử lý
             return pendingPersonalTasks.isNotEmpty() ||
                    pendingTeamTasks.isNotEmpty() ||
-                   pendingMessages.isNotEmpty() ||
-                   pendingReadStatuses.isNotEmpty() ||
-                   pendingReactions.isNotEmpty()
+                   pendingMessages.isNotEmpty()
+                   // || pendingReadStatuses.isNotEmpty()
+                   // || pendingReactions.isNotEmpty()
         } catch (e: Exception) {
             Log.e(TAG, "Error checking pending changes", e)
             return false
@@ -329,7 +329,7 @@ class SyncRepositoryImpl @Inject constructor(
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 "periodic_sync",
-                ExistingPeriodicWorkPolicy.UPDATE,
+                ExistingPeriodicWorkPolicy.REPLACE,
                 syncWorkRequest
             )
 

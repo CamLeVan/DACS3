@@ -61,7 +61,6 @@ import com.example.taskapplication.ui.theme.LocalExtendedColorScheme
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
  * Màn hình hiển thị danh sách công việc cá nhân với giao diện hiện đại

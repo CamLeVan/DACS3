@@ -266,23 +266,16 @@ class SyncRepositoryImpl @Inject constructor(
      * Kiểm tra xem có thay đổi nào đang chờ đồng bộ không
      * @return true nếu có thay đổi cần đồng bộ, false nếu không có
      */
-    @Override
     override suspend fun hasPendingChanges(): Boolean {
         try {
             val pendingPersonalTasks = personalTaskDao.getPendingSyncTasks()
             val pendingTeamTasks = teamTaskDao.getPendingSyncTasks()
             val pendingMessages = messageDao.getPendingSyncMessages()
 
-            // Thêm các loại dữ liệu khác khi cần thiết
-            val pendingReadStatuses = messageReadStatusDao.getPendingSyncReadStatuses()
-            val pendingReactions = messageReactionDao.getPendingSyncReactions()
-
             // Kiểm tra nếu có bất kỳ thay đổi nào đang chờ xử lý
             return pendingPersonalTasks.isNotEmpty() ||
                    pendingTeamTasks.isNotEmpty() ||
-                   pendingMessages.isNotEmpty() ||
-                   pendingReadStatuses.isNotEmpty() ||
-                   pendingReactions.isNotEmpty()
+                   pendingMessages.isNotEmpty()
         } catch (e: Exception) {
             Log.e(TAG, "Error checking pending changes", e)
             return false
@@ -329,7 +322,7 @@ class SyncRepositoryImpl @Inject constructor(
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 "periodic_sync",
-                ExistingPeriodicWorkPolicy.UPDATE,
+                ExistingPeriodicWorkPolicy.REPLACE,
                 syncWorkRequest
             )
 

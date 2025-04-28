@@ -243,7 +243,7 @@ fun PersonalTaskDetailScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
-                                        Icons.Default.Star,
+                                        Icons.Default.Flag,
                                         contentDescription = null,
                                         modifier = Modifier.size(24.dp),
                                         tint = when (currentTask.priority) {

@@ -17,7 +17,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.OutlinedFlag
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -144,7 +144,7 @@ fun PersonalTaskDetailScreen(
                             // Reload task
                             isLoading = true
                             error = null
-                            viewModel.loadTask(taskId)
+                            viewModel.getTask(taskId)
                         }
                     )
                 }
@@ -243,7 +243,7 @@ fun PersonalTaskDetailScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
-                                        Icons.Default.Star,
+                                        Icons.Default.Flag,
                                         contentDescription = null,
                                         modifier = Modifier.size(24.dp),
                                         tint = when (currentTask.priority) {

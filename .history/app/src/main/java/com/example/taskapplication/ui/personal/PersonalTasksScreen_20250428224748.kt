@@ -41,7 +41,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,7 +60,6 @@ import com.example.taskapplication.ui.theme.LocalExtendedColorScheme
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
  * Màn hình hiển thị danh sách công việc cá nhân với giao diện hiện đại
@@ -97,7 +95,6 @@ fun PersonalTasksScreen(
 
     // State cho LazyColumn
     val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
     val showScrollToTop by remember {
         derivedStateOf { listState.firstVisibleItemIndex > 5 }
     }

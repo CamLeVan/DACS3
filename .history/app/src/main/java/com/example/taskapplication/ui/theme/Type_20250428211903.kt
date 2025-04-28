@@ -8,9 +8,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.taskapplication.R
 
-// Temporarily use default font family instead of custom Poppins font
-// because the font files are missing or corrupted
-val PoppinsFontFamily = FontFamily.Default
+// Create custom font family from Google Fonts
+val PoppinsFontFamily = FontFamily(
+    Font(R.font.poppins_light, FontWeight.Light),
+    Font(R.font.poppins_regular, FontWeight.Normal),
+    Font(R.font.poppins_medium, FontWeight.Medium),
+    Font(R.font.poppins_semibold, FontWeight.SemiBold),
+    Font(R.font.poppins_bold, FontWeight.Bold)
+)
 
 // Set of Material typography styles with custom font
 val Typography = Typography(

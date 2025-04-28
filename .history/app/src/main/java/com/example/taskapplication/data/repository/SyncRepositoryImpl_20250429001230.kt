@@ -329,7 +329,7 @@ class SyncRepositoryImpl @Inject constructor(
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 "periodic_sync",
-                ExistingPeriodicWorkPolicy.UPDATE,
+                ExistingPeriodicWorkPolicy.REPLACE,
                 syncWorkRequest
             )
 

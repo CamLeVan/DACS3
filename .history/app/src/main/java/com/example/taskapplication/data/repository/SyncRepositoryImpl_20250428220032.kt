@@ -11,8 +11,7 @@ import com.example.taskapplication.data.database.entities.SyncMetadataEntity
 import com.example.taskapplication.data.util.ConnectionChecker
 import com.example.taskapplication.data.util.DataStoreManager
 import com.example.taskapplication.domain.repository.SyncRepository
-import androidx.work.*
-import java.util.concurrent.TimeUnit
+import com.example.taskapplication.workers.SyncWorker
 import kotlinx.coroutines.flow.first
 import java.io.IOException
 import java.util.UUID
@@ -43,9 +42,9 @@ class SyncRepositoryImpl @Inject constructor(
         }
 
         try {
+            val deviceId = getOrCreateDeviceId()
+
             // TODO: Implement initialSync in ApiService
-            // Khi triển khai API, bỏ comment các dòng dưới đây
-            // val deviceId = getOrCreateDeviceId()
             // val response = apiService.initialSync(InitialSyncRequest(deviceId))
             // if (!response.isSuccessful || response.body() == null) {
             //     return Result.failure(IOException("Initial sync failed: ${response.message()}"))
@@ -112,10 +111,10 @@ class SyncRepositoryImpl @Inject constructor(
         }
 
         try {
+            val lastSyncTimestamp = getLastSyncTimestamp() ?: 0
+            val deviceId = getOrCreateDeviceId()
+
             // TODO: Implement quickSync in ApiService
-            // Khi triển khai API, bỏ comment các dòng dưới đây
-            // val lastSyncTimestamp = getLastSyncTimestamp() ?: 0
-            // val deviceId = getOrCreateDeviceId()
             // val response = apiService.quickSync(QuickSyncRequest(lastSyncTimestamp, deviceId))
             // if (!response.isSuccessful || response.body() == null) {
             //     return Result.failure(IOException("Quick sync failed: ${response.message()}"))
@@ -197,42 +196,31 @@ class SyncRepositoryImpl @Inject constructor(
         }
 
         try {
-            // Kiểm tra xem có thay đổi nào cần đồng bộ không
-            if (hasPendingChanges()) {
-                Log.d(TAG, "Có thay đổi cần đồng bộ")
+            val deviceId = getOrCreateDeviceId()
 
-                // Khi triển khai API, bỏ comment dòng dưới đây
-                // val deviceId = getOrCreateDeviceId()
+            // Collect pending tasks from each DAO
+            val pendingPersonalTasks = personalTaskDao.getPendingSyncTasks()
+            val pendingTeamTasks = teamTaskDao.getPendingSyncTasks()
+            val pendingMessages = messageDao.getPendingSyncMessages()
 
-                // TODO: Implement pushChanges in ApiService
-                // val pushRequest = PushChangesRequest(
-                //     deviceId = deviceId,
-                //     // TODO: Convert entities to push data format
-                //     personalTasks = null,
-                //     teamTasks = null,
-                //     messageReadStatuses = null,
-                //     messageReactions = null
-                // )
-            }
+            // Create push request with pending changes
+            val pushRequest = PushChangesRequest(
+                deviceId = deviceId,
+                // TODO: Convert entities to push data format
+                personalTasks = null, // Convert pendingPersonalTasks
+                teamTasks = null, // Convert pendingTeamTasks
+                messageReadStatuses = null,
+                messageReactions = null
+            )
 
             // TODO: Implement pushChanges in ApiService
-            // Khi triển khai API, bỏ comment các dòng dưới đây
-            // val deviceId = getOrCreateDeviceId()
-            // val pushRequest = PushChangesRequest(
-            //     deviceId = deviceId,
-            //     // TODO: Convert entities to push data format
-            //     personalTasks = null,
-            //     teamTasks = null,
-            //     messageReadStatuses = null,
-            //     messageReactions = null
-            // )
             // val response = apiService.pushChanges(pushRequest)
             // if (!response.isSuccessful || response.body() == null) {
             //     return Result.failure(IOException("Push changes failed: ${response.message()}"))
             // }
             //
             // val responseBody = response.body()!!
-            //
+
             // Process push response
             // if (responseBody.success) {
             //     // Update local entities with server IDs
@@ -262,27 +250,16 @@ class SyncRepositoryImpl @Inject constructor(
         }
     }
 
-    /**
-     * Kiểm tra xem có thay đổi nào đang chờ đồng bộ không
-     * @return true nếu có thay đổi cần đồng bộ, false nếu không có
-     */
-    @Override
     override suspend fun hasPendingChanges(): Boolean {
         try {
             val pendingPersonalTasks = personalTaskDao.getPendingSyncTasks()
             val pendingTeamTasks = teamTaskDao.getPendingSyncTasks()
             val pendingMessages = messageDao.getPendingSyncMessages()
 
-            // Thêm các loại dữ liệu khác khi cần thiết
-            val pendingReadStatuses = messageReadStatusDao.getPendingSyncReadStatuses()
-            val pendingReactions = messageReactionDao.getPendingSyncReactions()
-
             // Kiểm tra nếu có bất kỳ thay đổi nào đang chờ xử lý
             return pendingPersonalTasks.isNotEmpty() ||
                    pendingTeamTasks.isNotEmpty() ||
-                   pendingMessages.isNotEmpty() ||
-                   pendingReadStatuses.isNotEmpty() ||
-                   pendingReactions.isNotEmpty()
+                   pendingMessages.isNotEmpty()
         } catch (e: Exception) {
             Log.e(TAG, "Error checking pending changes", e)
             return false
@@ -314,26 +291,11 @@ class SyncRepositoryImpl @Inject constructor(
     }
 
     override suspend fun schedulePeriodicSync(intervalMinutes: Int) {
+        // Sử dụng phương thức schedulePeriodicSync từ SyncWorker
         try {
-            // Tự triển khai schedulePeriodicSync thay vì sử dụng SyncWorker
-            val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .setRequiresBatteryNotLow(true)
-                .build()
-
-            val syncWorkRequest = PeriodicWorkRequestBuilder<com.example.taskapplication.workers.SyncWorker>(
-                intervalMinutes.toLong(), TimeUnit.MINUTES
-            )
-                .setConstraints(constraints)
-                .build()
-
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                "periodic_sync",
-                ExistingPeriodicWorkPolicy.UPDATE,
-                syncWorkRequest
-            )
-
-            Log.d(TAG, "Scheduled periodic sync every $intervalMinutes minutes")
+            // Sử dụng SyncWorker từ package workers với tham số mặc định
+            SyncWorker.schedulePeriodicSync(context)
+            Log.d(TAG, "Scheduled periodic sync using default interval")
         } catch (e: Exception) {
             Log.e(TAG, "Error scheduling periodic sync", e)
         }
@@ -341,8 +303,8 @@ class SyncRepositoryImpl @Inject constructor(
 
     override suspend fun cancelPeriodicSync() {
         try {
-            // Tự triển khai cancelPeriodicSync thay vì sử dụng SyncWorker
-            WorkManager.getInstance(context).cancelUniqueWork("periodic_sync")
+            // Sử dụng SyncWorker từ package workers
+            SyncWorker.cancelPeriodicSync(context)
             Log.d(TAG, "Cancelled periodic sync")
         } catch (e: Exception) {
             Log.e(TAG, "Error cancelling periodic sync", e)
