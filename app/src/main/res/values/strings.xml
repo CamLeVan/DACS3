@@ -12,6 +12,8 @@
     <string name="skip">Bỏ Qua</string>
     <string name="next">Tiếp Theo</string>
 
+
+
     <!-- Auth -->
     <string name="app_title">Quản Lý Công Việc</string>
     <string name="sign_in_to_continue">Đăng nhập để tiếp tục</string>
