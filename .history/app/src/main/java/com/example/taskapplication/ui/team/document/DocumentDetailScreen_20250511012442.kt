@@ -576,74 +576,18 @@ fun DocumentDetailScreen(
                 title = { Text("Xóa quyền truy cập") },
                 text = { Text("Bạn có chắc chắn muốn xóa quyền truy cập của người dùng này?") },
                 confirmButton = {
-                    // Delete button with animation
-                    var isDeleteHovered by remember { mutableStateOf(false) }
-                    val deleteScale by animateFloatAsState(
-                        targetValue = if (isDeleteHovered) 1.1f else 1f,
-                        animationSpec = tween(150),
-                        label = "Delete Button Scale"
-                    )
-
                     TextButton(
                         onClick = {
                             viewModel.deletePermission(permission.documentId, permission.userId)
                             showDeletePermissionDialog = null
-                        },
-                        modifier = Modifier
-                            .graphicsLayer {
-                                scaleX = deleteScale
-                                scaleY = deleteScale
-                            }
-                            .pointerInput(Unit) {
-                                awaitPointerEventScope {
-                                    while (true) {
-                                        val event = awaitPointerEvent()
-                                        isDeleteHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                                    }
-                                }
-                            }
+                        }
                     ) {
-                        Text(
-                            "Xóa",
-                            color = if (isDeleteHovered)
-                                MaterialTheme.colorScheme.error
-                            else
-                                MaterialTheme.colorScheme.primary
-                        )
+                        Text("Xóa")
                     }
                 },
                 dismissButton = {
-                    // Cancel button with animation
-                    var isCancelHovered by remember { mutableStateOf(false) }
-                    val cancelScale by animateFloatAsState(
-                        targetValue = if (isCancelHovered) 1.1f else 1f,
-                        animationSpec = tween(150),
-                        label = "Cancel Button Scale"
-                    )
-
-                    TextButton(
-                        onClick = { showDeletePermissionDialog = null },
-                        modifier = Modifier
-                            .graphicsLayer {
-                                scaleX = cancelScale
-                                scaleY = cancelScale
-                            }
-                            .pointerInput(Unit) {
-                                awaitPointerEventScope {
-                                    while (true) {
-                                        val event = awaitPointerEvent()
-                                        isCancelHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                                    }
-                                }
-                            }
-                    ) {
-                        Text(
-                            "Hủy",
-                            color = if (isCancelHovered)
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                            else
-                                MaterialTheme.colorScheme.onSurface
-                        )
+                    TextButton(onClick = { showDeletePermissionDialog = null }) {
+                        Text("Hủy")
                     }
                 }
             )
@@ -934,37 +878,8 @@ private fun EditDocumentDialog(
             }
         },
         dismissButton = {
-            // Cancel button with animation
-            var isCancelHovered by remember { mutableStateOf(false) }
-            val cancelScale by animateFloatAsState(
-                targetValue = if (isCancelHovered) 1.1f else 1f,
-                animationSpec = tween(150),
-                label = "Cancel Button Scale"
-            )
-
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = cancelScale
-                        scaleY = cancelScale
-                    }
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                isCancelHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                            }
-                        }
-                    }
-            ) {
-                Text(
-                    "Hủy",
-                    color = if (isCancelHovered)
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                    else
-                        MaterialTheme.colorScheme.onSurface
-                )
+            TextButton(onClick = onDismiss) {
+                Text("Hủy")
             }
         }
     )
@@ -1046,7 +961,7 @@ private fun PermissionItem(
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent()
-                        isHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
+                        isHovered = event.type == PointerEventType.Enter
                     }
                 }
             }

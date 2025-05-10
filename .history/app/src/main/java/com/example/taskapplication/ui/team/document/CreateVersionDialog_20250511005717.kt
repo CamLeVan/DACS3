@@ -124,58 +124,14 @@ fun CreateVersionDialog(
 
                 if (selectedFileName.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    // Animated file name appearance
-                    val fileNameScale = remember { Animatable(0.8f) }
-                    LaunchedEffect(selectedFileName) {
-                        fileNameScale.snapTo(0.8f)
-                        fileNameScale.animateTo(
-                            targetValue = 1f,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow
-                            )
-                        )
-                    }
-
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = MaterialTheme.shapes.small,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .graphicsLayer {
-                                scaleX = fileNameScale.value
-                                scaleY = fileNameScale.value
-                            }
-                    ) {
-                        Text(
-                            text = "File đã chọn: $selectedFileName",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(12.dp)
-                        )
-                    }
+                    Text(
+                        text = "File đã chọn: $selectedFileName",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
         },
         confirmButton = {
-            // Confirm button with animation
-            var isConfirmHovered by remember { mutableStateOf(false) }
-            val confirmEnabled = selectedFileUri != null
-
-            val confirmScale by animateFloatAsState(
-                targetValue = if (isConfirmHovered && confirmEnabled) 1.1f else 1f,
-                animationSpec = tween(150),
-                label = "Confirm Button Scale"
-            )
-
-            // Use simple color selection instead of animation
-            val confirmColor = if (confirmEnabled)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-
             TextButton(
                 onClick = {
                     selectedFileUri?.let { uri ->
@@ -188,59 +144,14 @@ fun CreateVersionDialog(
                         onCreateVersion(tempFile, changeNotes)
                     }
                 },
-                enabled = confirmEnabled,
-                modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = confirmScale
-                        scaleY = confirmScale
-                    }
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                isConfirmHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                            }
-                        }
-                    }
+                enabled = selectedFileUri != null
             ) {
-                Text(
-                    "Tạo",
-                    color = confirmColor
-                )
+                Text("Tạo")
             }
         },
         dismissButton = {
-            // Dismiss button with animation
-            var isDismissHovered by remember { mutableStateOf(false) }
-            val dismissScale by animateFloatAsState(
-                targetValue = if (isDismissHovered) 1.1f else 1f,
-                animationSpec = tween(150),
-                label = "Dismiss Button Scale"
-            )
-
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = dismissScale
-                        scaleY = dismissScale
-                    }
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                isDismissHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                            }
-                        }
-                    }
-            ) {
-                Text(
-                    "Hủy",
-                    color = if (isDismissHovered)
-                        MaterialTheme.colorScheme.error
-                    else
-                        MaterialTheme.colorScheme.onSurface
-                )
+            TextButton(onClick = onDismiss) {
+                Text("Hủy")
             }
         }
     )

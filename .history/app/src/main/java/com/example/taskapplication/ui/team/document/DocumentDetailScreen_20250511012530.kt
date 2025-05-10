@@ -1046,7 +1046,7 @@ private fun PermissionItem(
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent()
-                        isHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
+                        isHovered = event.type == PointerEventType.Enter
                     }
                 }
             }

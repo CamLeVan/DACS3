@@ -172,13 +172,17 @@ fun PermissionTypeOption(
         label = "Chip Scale Animation"
     )
 
-    // Color selection based on state
-    val containerColor = when {
-        selected && isHovered -> MaterialTheme.colorScheme.primary
-        selected -> MaterialTheme.colorScheme.primaryContainer
-        isHovered -> MaterialTheme.colorScheme.surfaceVariant
-        else -> MaterialTheme.colorScheme.surface
-    }
+    // Color animation
+    val containerColor by animateColorAsState(
+        targetValue = when {
+            selected && isHovered -> MaterialTheme.colorScheme.primary
+            selected -> MaterialTheme.colorScheme.primaryContainer
+            isHovered -> MaterialTheme.colorScheme.surfaceVariant
+            else -> MaterialTheme.colorScheme.surface
+        },
+        animationSpec = tween(durationMillis = 200),
+        label = "Chip Color Animation"
+    )
 
     FilterChip(
         selected = selected,

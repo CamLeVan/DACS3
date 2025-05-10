@@ -170,11 +170,14 @@ fun CreateVersionDialog(
                 label = "Confirm Button Scale"
             )
 
-            // Use simple color selection instead of animation
-            val confirmColor = if (confirmEnabled)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            val confirmColor by animateColorAsState(
+                targetValue = if (confirmEnabled)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                animationSpec = tween(200),
+                label = "Confirm Button Color"
+            )
 
             TextButton(
                 onClick = {

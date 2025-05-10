@@ -84,11 +84,14 @@ fun CreatePermissionDialog(
                 label = "Confirm Button Scale"
             )
 
-            // Use simple color selection instead of animation
-            val confirmColor = if (confirmEnabled)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            val confirmColor by animateColorAsState(
+                targetValue = if (confirmEnabled)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                animationSpec = tween(200),
+                label = "Confirm Button Color"
+            )
 
             TextButton(
                 onClick = {
@@ -118,37 +121,8 @@ fun CreatePermissionDialog(
             }
         },
         dismissButton = {
-            // Dismiss button with animation
-            var isDismissHovered by remember { mutableStateOf(false) }
-            val dismissScale by animateFloatAsState(
-                targetValue = if (isDismissHovered) 1.1f else 1f,
-                animationSpec = tween(150),
-                label = "Dismiss Button Scale"
-            )
-
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = dismissScale
-                        scaleY = dismissScale
-                    }
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                isDismissHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                            }
-                        }
-                    }
-            ) {
-                Text(
-                    "Hủy",
-                    color = if (isDismissHovered)
-                        MaterialTheme.colorScheme.error
-                    else
-                        MaterialTheme.colorScheme.onSurface
-                )
+            TextButton(onClick = onDismiss) {
+                Text("Hủy")
             }
         }
     )
@@ -172,13 +146,17 @@ fun PermissionTypeOption(
         label = "Chip Scale Animation"
     )
 
-    // Color selection based on state
-    val containerColor = when {
-        selected && isHovered -> MaterialTheme.colorScheme.primary
-        selected -> MaterialTheme.colorScheme.primaryContainer
-        isHovered -> MaterialTheme.colorScheme.surfaceVariant
-        else -> MaterialTheme.colorScheme.surface
-    }
+    // Color animation
+    val containerColor by animateColorAsState(
+        targetValue = when {
+            selected && isHovered -> MaterialTheme.colorScheme.primary
+            selected -> MaterialTheme.colorScheme.primaryContainer
+            isHovered -> MaterialTheme.colorScheme.surfaceVariant
+            else -> MaterialTheme.colorScheme.surface
+        },
+        animationSpec = tween(durationMillis = 200),
+        label = "Chip Color Animation"
+    )
 
     FilterChip(
         selected = selected,

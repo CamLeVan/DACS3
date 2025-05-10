@@ -613,37 +613,8 @@ fun DocumentDetailScreen(
                     }
                 },
                 dismissButton = {
-                    // Cancel button with animation
-                    var isCancelHovered by remember { mutableStateOf(false) }
-                    val cancelScale by animateFloatAsState(
-                        targetValue = if (isCancelHovered) 1.1f else 1f,
-                        animationSpec = tween(150),
-                        label = "Cancel Button Scale"
-                    )
-
-                    TextButton(
-                        onClick = { showDeletePermissionDialog = null },
-                        modifier = Modifier
-                            .graphicsLayer {
-                                scaleX = cancelScale
-                                scaleY = cancelScale
-                            }
-                            .pointerInput(Unit) {
-                                awaitPointerEventScope {
-                                    while (true) {
-                                        val event = awaitPointerEvent()
-                                        isCancelHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                                    }
-                                }
-                            }
-                    ) {
-                        Text(
-                            "Hủy",
-                            color = if (isCancelHovered)
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                            else
-                                MaterialTheme.colorScheme.onSurface
-                        )
+                    TextButton(onClick = { showDeletePermissionDialog = null }) {
+                        Text("Hủy")
                     }
                 }
             )
@@ -1046,7 +1017,7 @@ private fun PermissionItem(
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent()
-                        isHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
+                        isHovered = event.type == PointerEventType.Enter
                     }
                 }
             }

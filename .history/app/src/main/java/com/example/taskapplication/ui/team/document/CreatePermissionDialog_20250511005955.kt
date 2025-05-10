@@ -84,11 +84,14 @@ fun CreatePermissionDialog(
                 label = "Confirm Button Scale"
             )
 
-            // Use simple color selection instead of animation
-            val confirmColor = if (confirmEnabled)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            val confirmColor by animateColorAsState(
+                targetValue = if (confirmEnabled)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                animationSpec = tween(200),
+                label = "Confirm Button Color"
+            )
 
             TextButton(
                 onClick = {
@@ -172,13 +175,17 @@ fun PermissionTypeOption(
         label = "Chip Scale Animation"
     )
 
-    // Color selection based on state
-    val containerColor = when {
-        selected && isHovered -> MaterialTheme.colorScheme.primary
-        selected -> MaterialTheme.colorScheme.primaryContainer
-        isHovered -> MaterialTheme.colorScheme.surfaceVariant
-        else -> MaterialTheme.colorScheme.surface
-    }
+    // Color animation
+    val containerColor by animateColorAsState(
+        targetValue = when {
+            selected && isHovered -> MaterialTheme.colorScheme.primary
+            selected -> MaterialTheme.colorScheme.primaryContainer
+            isHovered -> MaterialTheme.colorScheme.surfaceVariant
+            else -> MaterialTheme.colorScheme.surface
+        },
+        animationSpec = tween(durationMillis = 200),
+        label = "Chip Color Animation"
+    )
 
     FilterChip(
         selected = selected,
