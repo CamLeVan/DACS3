@@ -323,7 +323,7 @@ fun ProfileContent(
                                 .size(100.dp)
                                 .padding(8.dp)
                                 .graphicsLayer {
-                                    rotationZ = if (isAvatarHovered) rotation.value else 0f
+                                    rotationZ = if (isAvatarHovered) (rotation as? Animatable<Float, AnimationVector1D>)?.value ?: 0f else 0f
                                 },
                             tint = MaterialTheme.colorScheme.primary
                         )

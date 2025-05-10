@@ -210,7 +210,7 @@ fun ProfileScreen(
                             )
                         ) {
                             Text(
-                                text = (uiState as ProfileUiState.Error).message,
+                                text = uiState.message,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.padding(16.dp)
@@ -305,16 +305,19 @@ fun ProfileContent(
                 ) {
                     if (user.avatar.isNullOrEmpty()) {
                         // Rotating animation for default avatar
-                        val infiniteTransition = rememberInfiniteTransition()
-                        val rotation = infiniteTransition.animateFloat(
-                            initialValue = -5f,
-                            targetValue = 5f,
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(500, easing = FastOutSlowInEasing),
-                                repeatMode = RepeatMode.Reverse
-                            ),
-                            label = "Avatar Rotation"
-                        )
+                        val rotation = if (isAvatarHovered) {
+                            rememberInfiniteTransition().animateFloat(
+                                initialValue = -5f,
+                                targetValue = 5f,
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(500, easing = FastOutSlowInEasing),
+                                    repeatMode = RepeatMode.Reverse
+                                ),
+                                label = "Avatar Rotation"
+                            )
+                        } else {
+                            remember { Animatable(0f) }
+                        }
 
                         Icon(
                             imageVector = Icons.Default.Person,

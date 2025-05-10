@@ -170,7 +170,7 @@ fun ProfileScreen(
                 exit = fadeOut(tween(300)) + shrinkOut(tween(300), shrinkTowards = Alignment.Center)
             ) {
                 if (uiState is ProfileUiState.Success) {
-                    val user = (uiState as ProfileUiState.Success).user
+                    val user = uiState.user
                     ProfileContent(user = user, onLogoutClick = onLogoutClick)
                 }
             }
@@ -210,7 +210,7 @@ fun ProfileScreen(
                             )
                         ) {
                             Text(
-                                text = (uiState as ProfileUiState.Error).message,
+                                text = uiState.message,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.padding(16.dp)
@@ -305,16 +305,19 @@ fun ProfileContent(
                 ) {
                     if (user.avatar.isNullOrEmpty()) {
                         // Rotating animation for default avatar
-                        val infiniteTransition = rememberInfiniteTransition()
-                        val rotation = infiniteTransition.animateFloat(
-                            initialValue = -5f,
-                            targetValue = 5f,
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(500, easing = FastOutSlowInEasing),
-                                repeatMode = RepeatMode.Reverse
-                            ),
-                            label = "Avatar Rotation"
-                        )
+                        val rotation = if (isAvatarHovered) {
+                            rememberInfiniteTransition().animateFloat(
+                                initialValue = -5f,
+                                targetValue = 5f,
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(500, easing = FastOutSlowInEasing),
+                                    repeatMode = RepeatMode.Reverse
+                                ),
+                                label = "Avatar Rotation"
+                            )
+                        } else {
+                            remember { Animatable(0f) }
+                        }
 
                         Icon(
                             imageVector = Icons.Default.Person,
@@ -494,78 +497,25 @@ fun ProfileContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Logout Button with animation
-        val logoutButtonScale = remember { Animatable(0.9f) }
-        LaunchedEffect(Unit) {
-            delay(800) // Delay to create a staggered effect
-            logoutButtonScale.animateTo(
-                targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            )
-        }
-
-        var isButtonHovered by remember { mutableStateOf(false) }
-        val buttonHoverScale by animateFloatAsState(
-            targetValue = if (isButtonHovered) 1.05f else 1f,
-            animationSpec = tween(200),
-            label = "Button Hover Scale"
-        )
-
-        // Pulsating effect for logout button
-        val buttonPulse = rememberInfiniteTransition().animateFloat(
-            initialValue = 0.98f,
-            targetValue = 1.02f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(2000, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "Button Pulse"
-        )
-
+        // Logout Button
         Button(
             onClick = onLogoutClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
-                .graphicsLayer {
-                    scaleX = logoutButtonScale.value * buttonHoverScale * buttonPulse.value
-                    scaleY = logoutButtonScale.value * buttonHoverScale * buttonPulse.value
-                    alpha = logoutButtonScale.value
-                }
-                .pointerInput(Unit) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            isButtonHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                        }
-                    }
-                },
+                .height(56.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
         ) {
-            // Rotating icon animation
-            val iconRotation by animateFloatAsState(
-                targetValue = if (isButtonHovered) 180f else 0f,
-                animationSpec = tween(300),
-                label = "Icon Rotation"
-            )
-
             Icon(
                 imageVector = Icons.Default.ExitToApp,
-                contentDescription = "Đăng xuất",
-                modifier = Modifier.graphicsLayer {
-                    rotationZ = iconRotation
-                }
+                contentDescription = "Logout"
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                "Đăng xuất",
+                "Logout",
                 style = MaterialTheme.typography.titleMedium
             )
         }
@@ -573,45 +523,11 @@ fun ProfileContent(
 }
 
 @Composable
-fun ProfileInfoItem(title: String, value: String, index: Int = 0) {
-    // Staggered animation based on index
-    val itemScale = remember { Animatable(0.8f) }
-    LaunchedEffect(Unit) {
-        delay(700 + (index * 150L)) // Staggered delay based on item index
-        itemScale.animateTo(
-            targetValue = 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow
-            )
-        )
-    }
-
-    var isItemHovered by remember { mutableStateOf(false) }
-    val itemHoverScale by animateFloatAsState(
-        targetValue = if (isItemHovered) 1.02f else 1f,
-        animationSpec = tween(150),
-        label = "Item Hover Scale"
-    )
-
+fun ProfileInfoItem(title: String, value: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .graphicsLayer {
-                scaleX = itemScale.value * itemHoverScale
-                scaleY = itemScale.value * itemHoverScale
-                alpha = itemScale.value
-            }
-            .clickable { isItemHovered = !isItemHovered }
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        isItemHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                    }
-                }
-            }
     ) {
         Text(
             text = title,
@@ -622,28 +538,14 @@ fun ProfileInfoItem(title: String, value: String, index: Int = 0) {
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
-            color = if (isItemHovered)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Animated divider
-        val dividerWidth by animateFloatAsState(
-            targetValue = if (isItemHovered) 1f else 0.3f,
-            animationSpec = tween(300),
-            label = "Divider Width Animation"
-        )
-
         Divider(
-            color = if (isItemHovered)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.outlineVariant,
-            thickness = 1.dp,
-            modifier = Modifier.fillMaxWidth(dividerWidth)
+            color = MaterialTheme.colorScheme.outlineVariant,
+            thickness = 1.dp
         )
     }
 }

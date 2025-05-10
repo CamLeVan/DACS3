@@ -26,7 +26,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.taskapplication.ui.animation.AnimationUtils
-import kotlinx.coroutines.delay
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -170,7 +169,7 @@ fun ProfileScreen(
                 exit = fadeOut(tween(300)) + shrinkOut(tween(300), shrinkTowards = Alignment.Center)
             ) {
                 if (uiState is ProfileUiState.Success) {
-                    val user = (uiState as ProfileUiState.Success).user
+                    val user = uiState.user
                     ProfileContent(user = user, onLogoutClick = onLogoutClick)
                 }
             }
@@ -210,7 +209,7 @@ fun ProfileScreen(
                             )
                         ) {
                             Text(
-                                text = (uiState as ProfileUiState.Error).message,
+                                text = uiState.message,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.padding(16.dp)
@@ -252,79 +251,24 @@ fun ProfileContent(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Profile Image with animation
-                var isAvatarHovered by remember { mutableStateOf(false) }
-                val avatarScale by animateFloatAsState(
-                    targetValue = if (isAvatarHovered) 1.05f else 1f,
-                    animationSpec = tween(200),
-                    label = "Avatar Scale Animation"
-                )
-                val avatarElevation by animateDpAsState(
-                    targetValue = if (isAvatarHovered) 8.dp else 4.dp,
-                    animationSpec = tween(200),
-                    label = "Avatar Elevation Animation"
-                )
-
-                // Initial appear animation
-                val initialScale = remember { Animatable(0.5f) }
-                LaunchedEffect(Unit) {
-                    initialScale.animateTo(
-                        targetValue = 1f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    )
-                }
-
+                // Profile Image
                 Box(
                     modifier = Modifier
                         .size(140.dp)
-                        .graphicsLayer {
-                            scaleX = initialScale.value * avatarScale
-                            scaleY = initialScale.value * avatarScale
-                        }
-                        .shadow(
-                            elevation = avatarElevation,
-                            shape = CircleShape
-                        )
                         .background(
                             color = MaterialTheme.colorScheme.surface,
                             shape = CircleShape
                         )
-                        .padding(4.dp)
-                        .pointerInput(Unit) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    isAvatarHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                                }
-                            }
-                        },
+                        .padding(4.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     if (user.avatar.isNullOrEmpty()) {
-                        // Rotating animation for default avatar
-                        val infiniteTransition = rememberInfiniteTransition()
-                        val rotation = infiniteTransition.animateFloat(
-                            initialValue = -5f,
-                            targetValue = 5f,
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(500, easing = FastOutSlowInEasing),
-                                repeatMode = RepeatMode.Reverse
-                            ),
-                            label = "Avatar Rotation"
-                        )
-
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "Ảnh đại diện",
+                            contentDescription = "Profile",
                             modifier = Modifier
                                 .size(100.dp)
-                                .padding(8.dp)
-                                .graphicsLayer {
-                                    rotationZ = if (isAvatarHovered) rotation.value else 0f
-                                },
+                                .padding(8.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     } else {
@@ -333,7 +277,7 @@ fun ProfileContent(
                                 .data(user.avatar)
                                 .crossfade(true)
                                 .build(),
-                            contentDescription = "Ảnh đại diện",
+                            contentDescription = "Profile Picture",
                             modifier = Modifier
                                 .size(132.dp)
                                 .clip(CircleShape),
@@ -344,74 +288,24 @@ fun ProfileContent(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // User Name with animation
-                val nameScale = remember { Animatable(0.8f) }
-                LaunchedEffect(Unit) {
-                    delay(200) // Delay to create a staggered effect
-                    nameScale.animateTo(
-                        targetValue = 1f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    )
-                }
-
+                // User Name
                 Text(
                     text = user.name,
                     style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.graphicsLayer {
-                        scaleX = nameScale.value
-                        scaleY = nameScale.value
-                        alpha = nameScale.value
-                    }
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // User Email with icon and animation
-                val emailScale = remember { Animatable(0.8f) }
-                LaunchedEffect(Unit) {
-                    delay(400) // Delay to create a staggered effect
-                    emailScale.animateTo(
-                        targetValue = 1f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    )
-                }
-
+                // User Email with icon
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.graphicsLayer {
-                        scaleX = emailScale.value
-                        scaleY = emailScale.value
-                        alpha = emailScale.value
-                    }
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Pulsating email icon
-                    val iconPulse = rememberInfiniteTransition().animateFloat(
-                        initialValue = 0.9f,
-                        targetValue = 1.1f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(1000, easing = FastOutSlowInEasing),
-                            repeatMode = RepeatMode.Reverse
-                        ),
-                        label = "Email Icon Pulse"
-                    )
-
                     Icon(
                         imageVector = Icons.Default.Email,
                         contentDescription = "Email",
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .size(16.dp)
-                            .graphicsLayer {
-                                scaleX = iconPulse.value
-                                scaleY = iconPulse.value
-                            }
+                        modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -423,52 +317,11 @@ fun ProfileContent(
             }
         }
 
-        // Profile Info Cards with animation
-        val cardScale = remember { Animatable(0.9f) }
-        LaunchedEffect(Unit) {
-            delay(600) // Delay to create a staggered effect
-            cardScale.animateTo(
-                targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            )
-        }
-
-        var isCardHovered by remember { mutableStateOf(false) }
-        val hoverScale by animateFloatAsState(
-            targetValue = if (isCardHovered) 1.02f else 1f,
-            animationSpec = tween(200),
-            label = "Card Hover Scale"
-        )
-        val hoverElevation by animateDpAsState(
-            targetValue = if (isCardHovered) 8.dp else 4.dp,
-            animationSpec = tween(200),
-            label = "Card Hover Elevation"
-        )
-
+        // Profile Info Cards
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .graphicsLayer {
-                    scaleX = cardScale.value * hoverScale
-                    scaleY = cardScale.value * hoverScale
-                    alpha = cardScale.value
-                }
-                .shadow(
-                    elevation = hoverElevation,
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .pointerInput(Unit) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            isCardHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                        }
-                    }
-                },
+                .padding(vertical = 8.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
@@ -478,94 +331,40 @@ fun ProfileContent(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Thông tin tài khoản",
+                    text = "Account Information",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Staggered animation for info items
-                ProfileInfoItem(title = "ID người dùng", value = user.id, index = 0)
-                ProfileInfoItem(title = "Loại tài khoản", value = "Tiêu chuẩn", index = 1)
-                ProfileInfoItem(title = "Ngày tham gia", value = "Tháng 1, 2023", index = 2)
+                ProfileInfoItem(title = "User ID", value = user.id)
+                ProfileInfoItem(title = "Account Type", value = "Standard")
+                ProfileInfoItem(title = "Joined", value = "January 2023")
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Logout Button with animation
-        val logoutButtonScale = remember { Animatable(0.9f) }
-        LaunchedEffect(Unit) {
-            delay(800) // Delay to create a staggered effect
-            logoutButtonScale.animateTo(
-                targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            )
-        }
-
-        var isButtonHovered by remember { mutableStateOf(false) }
-        val buttonHoverScale by animateFloatAsState(
-            targetValue = if (isButtonHovered) 1.05f else 1f,
-            animationSpec = tween(200),
-            label = "Button Hover Scale"
-        )
-
-        // Pulsating effect for logout button
-        val buttonPulse = rememberInfiniteTransition().animateFloat(
-            initialValue = 0.98f,
-            targetValue = 1.02f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(2000, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "Button Pulse"
-        )
-
+        // Logout Button
         Button(
             onClick = onLogoutClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
-                .graphicsLayer {
-                    scaleX = logoutButtonScale.value * buttonHoverScale * buttonPulse.value
-                    scaleY = logoutButtonScale.value * buttonHoverScale * buttonPulse.value
-                    alpha = logoutButtonScale.value
-                }
-                .pointerInput(Unit) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            isButtonHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                        }
-                    }
-                },
+                .height(56.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
         ) {
-            // Rotating icon animation
-            val iconRotation by animateFloatAsState(
-                targetValue = if (isButtonHovered) 180f else 0f,
-                animationSpec = tween(300),
-                label = "Icon Rotation"
-            )
-
             Icon(
                 imageVector = Icons.Default.ExitToApp,
-                contentDescription = "Đăng xuất",
-                modifier = Modifier.graphicsLayer {
-                    rotationZ = iconRotation
-                }
+                contentDescription = "Logout"
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                "Đăng xuất",
+                "Logout",
                 style = MaterialTheme.typography.titleMedium
             )
         }
@@ -573,45 +372,11 @@ fun ProfileContent(
 }
 
 @Composable
-fun ProfileInfoItem(title: String, value: String, index: Int = 0) {
-    // Staggered animation based on index
-    val itemScale = remember { Animatable(0.8f) }
-    LaunchedEffect(Unit) {
-        delay(700 + (index * 150L)) // Staggered delay based on item index
-        itemScale.animateTo(
-            targetValue = 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow
-            )
-        )
-    }
-
-    var isItemHovered by remember { mutableStateOf(false) }
-    val itemHoverScale by animateFloatAsState(
-        targetValue = if (isItemHovered) 1.02f else 1f,
-        animationSpec = tween(150),
-        label = "Item Hover Scale"
-    )
-
+fun ProfileInfoItem(title: String, value: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .graphicsLayer {
-                scaleX = itemScale.value * itemHoverScale
-                scaleY = itemScale.value * itemHoverScale
-                alpha = itemScale.value
-            }
-            .clickable { isItemHovered = !isItemHovered }
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        isItemHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                    }
-                }
-            }
     ) {
         Text(
             text = title,
@@ -622,28 +387,14 @@ fun ProfileInfoItem(title: String, value: String, index: Int = 0) {
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
-            color = if (isItemHovered)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Animated divider
-        val dividerWidth by animateFloatAsState(
-            targetValue = if (isItemHovered) 1f else 0.3f,
-            animationSpec = tween(300),
-            label = "Divider Width Animation"
-        )
-
         Divider(
-            color = if (isItemHovered)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.outlineVariant,
-            thickness = 1.dp,
-            modifier = Modifier.fillMaxWidth(dividerWidth)
+            color = MaterialTheme.colorScheme.outlineVariant,
+            thickness = 1.dp
         )
     }
 }
