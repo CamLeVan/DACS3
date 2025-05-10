@@ -43,9 +43,6 @@ class DocumentViewModel @Inject constructor(
     private val updateFolderUseCase: UpdateFolderUseCase,
     private val deleteFolderUseCase: DeleteFolderUseCase,
     private val syncDocumentsUseCase: SyncDocumentsUseCase,
-    private val getDocumentPermissionsUseCase: GetDocumentPermissionsUseCase,
-    private val createDocumentPermissionUseCase: CreateDocumentPermissionUseCase,
-    private val deleteDocumentPermissionUseCase: DeleteDocumentPermissionUseCase,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -165,7 +162,6 @@ class DocumentViewModel @Inject constructor(
                             )
                         }
                         loadDocumentVersions(documentId)
-                        loadDocumentPermissions(documentId)
                     }
                     is Resource.Error -> {
                         _documentDetailState.update {
@@ -555,118 +551,6 @@ class DocumentViewModel @Inject constructor(
                     documents = filteredDocuments,
                     isLoading = false
                 )
-            }
-        }
-    }
-
-    /**
-     * Load document permissions
-     */
-    private fun loadDocumentPermissions(documentId: String) {
-        viewModelScope.launch {
-            getDocumentPermissionsUseCase(documentId).collectLatest { result ->
-                when (result) {
-                    is Resource.Success -> {
-                        _documentDetailState.update {
-                            it.copy(permissions = result.data)
-                        }
-                    }
-                    is Resource.Error -> {
-                        // Không cập nhật error state vì đây là thông tin phụ
-                    }
-                    is Resource.Loading -> {
-                        // Không cập nhật loading state vì đây là thông tin phụ
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Create a new permission
-     */
-    fun createPermission(documentId: String, userId: String, permissionType: String) {
-        viewModelScope.launch {
-            _documentDetailState.update { it.copy(isLoading = true, error = null) }
-
-            val permission = DocumentPermission(
-                id = UuidGenerator.generate(),
-                documentId = documentId,
-                userId = userId,
-                permissionType = permissionType,
-                grantedBy = "", // Sẽ được cập nhật bởi repository
-                grantedAt = System.currentTimeMillis()
-            )
-
-            when (val result = createDocumentPermissionUseCase(permission)) {
-                is Resource.Success -> {
-                    loadDocumentPermissions(documentId)
-                    _documentDetailState.update { it.copy(isLoading = false) }
-                }
-                is Resource.Error -> {
-                    _documentDetailState.update {
-                        it.copy(
-                            isLoading = false,
-                            error = result.message
-                        )
-                    }
-                }
-                is Resource.Loading -> {
-                    _documentDetailState.update { it.copy(isLoading = true) }
-                }
-            }
-        }
-    }
-
-    /**
-     * Delete a permission
-     */
-    fun deletePermission(documentId: String, userId: String) {
-        viewModelScope.launch {
-            _documentDetailState.update { it.copy(isLoading = true, error = null) }
-
-            when (val result = deleteDocumentPermissionUseCase(documentId, userId)) {
-                is Resource.Success -> {
-                    loadDocumentPermissions(documentId)
-                    _documentDetailState.update { it.copy(isLoading = false) }
-                }
-                is Resource.Error -> {
-                    _documentDetailState.update {
-                        it.copy(
-                            isLoading = false,
-                            error = result.message
-                        )
-                    }
-                }
-                is Resource.Loading -> {
-                    _documentDetailState.update { it.copy(isLoading = true) }
-                }
-            }
-        }
-    }
-
-    /**
-     * Download document with callback
-     */
-    fun downloadDocument(documentId: String, versionId: String? = null, callback: (Result<File>) -> Unit) {
-        viewModelScope.launch {
-            try {
-                val result = downloadDocumentUseCase(documentId, versionId)
-                when (result) {
-                    is Resource.Success -> {
-                        result.data?.let {
-                            callback(Result.success(it))
-                        } ?: callback(Result.failure(Exception("File not found")))
-                    }
-                    is Resource.Error -> {
-                        callback(Result.failure(Exception(result.message)))
-                    }
-                    is Resource.Loading -> {
-                        // Ignore loading state
-                    }
-                }
-            } catch (e: Exception) {
-                callback(Result.failure(e))
             }
         }
     }

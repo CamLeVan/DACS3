@@ -104,67 +104,28 @@ fun TaskItem(
         )
     }
 
-    // Thêm hiệu ứng hover
-    var isHovered by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isHovered) 1.02f else 1f,
-        animationSpec = tween(durationMillis = 150),
-        label = "Card Scale Animation"
-    )
-    val elevation by animateDpAsState(
-        targetValue = if (isHovered) (if (task.isCompleted) 2.dp else 5.dp) else (if (task.isCompleted) 1.dp else 3.dp),
-        animationSpec = tween(durationMillis = 150),
-        label = "Card Elevation Animation"
-    )
-
     GradientCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        isHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                    }
-                }
-            },
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         onClick = onClick,
         cornerRadius = 12.dp,
-        elevation = elevation,
+        elevation = if (task.isCompleted) 1.dp else 3.dp,
         gradient = cardGradient
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Checkbox với màu tùy chỉnh và hiệu ứng khi hover
-            val checkboxScale by animateFloatAsState(
-                targetValue = if (isHovered) 1.1f else 1f,
-                animationSpec = tween(durationMillis = 150),
-                label = "Checkbox Scale Animation"
-            )
-
-            Box(
-                modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = checkboxScale
-                        scaleY = checkboxScale
-                    }
-            ) {
-                Checkbox(
-                    checked = task.isCompleted,
-                    onCheckedChange = { onCompleteClick() },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = MaterialTheme.colorScheme.primary,
-                        uncheckedColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                    )
+            // Checkbox với màu tùy chỉnh
+            Checkbox(
+                checked = task.isCompleted,
+                onCheckedChange = { onCompleteClick() },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.primary,
+                    uncheckedColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                 )
-            }
+            )
 
             Spacer(modifier = Modifier.width(12.dp))
 

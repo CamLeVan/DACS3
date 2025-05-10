@@ -202,29 +202,17 @@ fun DocumentsScreen(
             }
 
             // Loading indicator
-            AnimatedVisibility(
-                visible = documentListState.isLoading || folderState.isLoading,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
+            if (documentListState.isLoading || folderState.isLoading) {
                 LoadingIndicator()
             }
 
             // Error message
-            AnimatedVisibility(
-                visible = documentListState.error != null,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
-                documentListState.error?.let { ErrorText(text = it) }
+            if (documentListState.error != null) {
+                ErrorText(text = documentListState.error!!)
             }
 
-            AnimatedVisibility(
-                visible = folderState.error != null,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
-                folderState.error?.let { ErrorText(text = it) }
+            if (folderState.error != null) {
+                ErrorText(text = folderState.error!!)
             }
 
             // Folders
@@ -302,11 +290,7 @@ fun DocumentsScreen(
             }
 
             // Syncing indicator
-            AnimatedVisibility(
-                visible = documentListState.isSyncing,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
+            if (documentListState.isSyncing) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -314,27 +298,13 @@ fun DocumentsScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val rotation by rememberInfiniteTransition().animateFloat(
-                        initialValue = 0f,
-                        targetValue = 360f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(1000, easing = LinearEasing),
-                            repeatMode = RepeatMode.Restart
-                        ),
-                        label = "Sync Indicator Rotation"
-                    )
-
-                    Icon(
-                        Icons.Default.Refresh,
-                        contentDescription = "Đang đồng bộ",
-                        modifier = Modifier
-                            .size(16.dp)
-                            .graphicsLayer { rotationZ = rotation },
-                        tint = MaterialTheme.colorScheme.primary
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Đang đồng bộ...",
+                        text = "Syncing...",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }

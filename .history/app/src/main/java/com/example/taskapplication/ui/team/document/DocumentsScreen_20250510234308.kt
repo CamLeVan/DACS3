@@ -302,11 +302,7 @@ fun DocumentsScreen(
             }
 
             // Syncing indicator
-            AnimatedVisibility(
-                visible = documentListState.isSyncing,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
+            if (documentListState.isSyncing) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -314,27 +310,13 @@ fun DocumentsScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val rotation by rememberInfiniteTransition().animateFloat(
-                        initialValue = 0f,
-                        targetValue = 360f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(1000, easing = LinearEasing),
-                            repeatMode = RepeatMode.Restart
-                        ),
-                        label = "Sync Indicator Rotation"
-                    )
-
-                    Icon(
-                        Icons.Default.Refresh,
-                        contentDescription = "Đang đồng bộ",
-                        modifier = Modifier
-                            .size(16.dp)
-                            .graphicsLayer { rotationZ = rotation },
-                        tint = MaterialTheme.colorScheme.primary
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Đang đồng bộ...",
+                        text = "Syncing...",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }

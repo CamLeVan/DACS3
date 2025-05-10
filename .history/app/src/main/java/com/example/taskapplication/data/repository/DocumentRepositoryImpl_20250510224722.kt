@@ -9,7 +9,6 @@ import com.example.taskapplication.data.mapper.toDomain
 import com.example.taskapplication.data.mapper.toEntity
 import com.example.taskapplication.data.remote.ApiService
 import com.example.taskapplication.data.remote.api.DocumentApiService
-import com.example.taskapplication.data.remote.dto.toDomain
 import com.example.taskapplication.data.remote.request.CreateDocumentVersionRequest
 import com.example.taskapplication.data.remote.request.CreateDocumentPermissionRequest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull

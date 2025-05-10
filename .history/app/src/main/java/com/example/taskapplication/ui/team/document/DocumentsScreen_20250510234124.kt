@@ -202,29 +202,17 @@ fun DocumentsScreen(
             }
 
             // Loading indicator
-            AnimatedVisibility(
-                visible = documentListState.isLoading || folderState.isLoading,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
+            if (documentListState.isLoading || folderState.isLoading) {
                 LoadingIndicator()
             }
 
             // Error message
-            AnimatedVisibility(
-                visible = documentListState.error != null,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
-                documentListState.error?.let { ErrorText(text = it) }
+            if (documentListState.error != null) {
+                ErrorText(text = documentListState.error!!)
             }
 
-            AnimatedVisibility(
-                visible = folderState.error != null,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
-                folderState.error?.let { ErrorText(text = it) }
+            if (folderState.error != null) {
+                ErrorText(text = folderState.error!!)
             }
 
             // Folders
@@ -240,18 +228,12 @@ fun DocumentsScreen(
                         .weight(0.5f)
                         .fillMaxWidth()
                 ) {
-                    itemsIndexed(folderState.folders) { index, folder ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = AnimationUtils.listItemEnterAnimation(index),
-                            exit = AnimationUtils.listItemExitAnimation
-                        ) {
-                            FolderItem(
-                                folder = folder,
-                                onFolderClick = { viewModel.navigateToFolder(folder.id) },
-                                onDeleteClick = { showDeleteFolderDialog = folder }
-                            )
-                        }
+                    items(folderState.folders) { folder ->
+                        FolderItem(
+                            folder = folder,
+                            onFolderClick = { viewModel.navigateToFolder(folder.id) },
+                            onDeleteClick = { showDeleteFolderDialog = folder }
+                        )
                     }
                 }
 
@@ -283,30 +265,20 @@ fun DocumentsScreen(
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    itemsIndexed(documentListState.documents) { index, document ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = AnimationUtils.listItemEnterAnimation(index),
-                            exit = AnimationUtils.listItemExitAnimation
-                        ) {
-                            DocumentItem(
-                                document = document,
-                                onDocumentClick = {
-                                    navController.navigate("document_detail/${teamId}/${document.id}")
-                                },
-                                onDeleteClick = { showDeleteDocumentDialog = document }
-                            )
-                        }
+                    items(documentListState.documents) { document ->
+                        DocumentItem(
+                            document = document,
+                            onDocumentClick = {
+                                navController.navigate("document_detail/${teamId}/${document.id}")
+                            },
+                            onDeleteClick = { showDeleteDocumentDialog = document }
+                        )
                     }
                 }
             }
 
             // Syncing indicator
-            AnimatedVisibility(
-                visible = documentListState.isSyncing,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
+            if (documentListState.isSyncing) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -314,27 +286,13 @@ fun DocumentsScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val rotation by rememberInfiniteTransition().animateFloat(
-                        initialValue = 0f,
-                        targetValue = 360f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(1000, easing = LinearEasing),
-                            repeatMode = RepeatMode.Restart
-                        ),
-                        label = "Sync Indicator Rotation"
-                    )
-
-                    Icon(
-                        Icons.Default.Refresh,
-                        contentDescription = "Đang đồng bộ",
-                        modifier = Modifier
-                            .size(16.dp)
-                            .graphicsLayer { rotationZ = rotation },
-                        tint = MaterialTheme.colorScheme.primary
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Đang đồng bộ...",
+                        text = "Syncing...",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -343,11 +301,7 @@ fun DocumentsScreen(
     }
 
     // Create folder dialog
-    AnimatedVisibility(
-        visible = showCreateFolderDialog,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
+    if (showCreateFolderDialog) {
         com.example.taskapplication.ui.team.document.CreateFolderDialog(
             onDismiss = { showCreateFolderDialog = false },
             onCreateFolder = { name, description ->
@@ -358,89 +312,71 @@ fun DocumentsScreen(
     }
 
     // Create document dialog
-    AnimatedVisibility(
-        visible = showCreateDocumentDialog && selectedFileUri != null,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
-        if (selectedFileUri != null) {
-            com.example.taskapplication.ui.team.document.CreateDocumentDialog(
-                onDismiss = {
-                    showCreateDocumentDialog = false
-                    selectedFileUri = null
-                },
-                onCreateDocument = { name, description, accessLevel, allowedUsers ->
-                    selectedFileUri?.let { uri ->
-                        // Chuyển đổi Uri thành File
-                        val file = DocumentUtils.uriToFile(context, uri)
-                        if (file != null) {
-                            viewModel.createDocument(name, description, file, accessLevel, allowedUsers)
-                        }
+    if (showCreateDocumentDialog && selectedFileUri != null) {
+        com.example.taskapplication.ui.team.document.CreateDocumentDialog(
+            onDismiss = {
+                showCreateDocumentDialog = false
+                selectedFileUri = null
+            },
+            onCreateDocument = { name, description, accessLevel, allowedUsers ->
+                selectedFileUri?.let { uri ->
+                    // Chuyển đổi Uri thành File
+                    val file = DocumentUtils.uriToFile(context, uri)
+                    if (file != null) {
+                        viewModel.createDocument(name, description, file, accessLevel, allowedUsers)
                     }
-                    showCreateDocumentDialog = false
-                    selectedFileUri = null
                 }
-            )
-        }
+                showCreateDocumentDialog = false
+                selectedFileUri = null
+            }
+        )
     }
 
     // Delete folder dialog
-    AnimatedVisibility(
-        visible = showDeleteFolderDialog != null,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
-        showDeleteFolderDialog?.let { folder ->
-            AlertDialog(
-                onDismissRequest = { showDeleteFolderDialog = null },
-                title = { Text("Xóa thư mục") },
-                text = { Text("Bạn có chắc chắn muốn xóa thư mục '${folder.name}'?") },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.deleteFolder(folder.id)
-                            showDeleteFolderDialog = null
-                        }
-                    ) {
-                        Text("Xóa")
+    showDeleteFolderDialog?.let { folder ->
+        AlertDialog(
+            onDismissRequest = { showDeleteFolderDialog = null },
+            title = { Text("Delete Folder") },
+            text = { Text("Are you sure you want to delete the folder '${folder.name}'?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteFolder(folder.id)
+                        showDeleteFolderDialog = null
                     }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDeleteFolderDialog = null }) {
-                        Text("Hủy")
-                    }
+                ) {
+                    Text("Delete")
                 }
-            )
-        }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteFolderDialog = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     // Delete document dialog
-    AnimatedVisibility(
-        visible = showDeleteDocumentDialog != null,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
-        showDeleteDocumentDialog?.let { document ->
-            AlertDialog(
-                onDismissRequest = { showDeleteDocumentDialog = null },
-                title = { Text("Xóa tài liệu") },
-                text = { Text("Bạn có chắc chắn muốn xóa tài liệu '${document.name}'?") },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.deleteDocument(document.id)
-                            showDeleteDocumentDialog = null
-                        }
-                    ) {
-                        Text("Xóa")
+    showDeleteDocumentDialog?.let { document ->
+        AlertDialog(
+            onDismissRequest = { showDeleteDocumentDialog = null },
+            title = { Text("Delete Document") },
+            text = { Text("Are you sure you want to delete the document '${document.name}'?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteDocument(document.id)
+                        showDeleteDocumentDialog = null
                     }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDeleteDocumentDialog = null }) {
-                        Text("Hủy")
-                    }
+                ) {
+                    Text("Delete")
                 }
-            )
-        }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDocumentDialog = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -320,11 +319,7 @@ fun PersonalTasksScreen(
     }
 
     // Show add task dialog if necessary
-    AnimatedVisibility(
-        visible = showAddDialog,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
+    if (showAddDialog) {
         AddTaskDialog(
             onDismiss = { viewModel.hideAddTaskDialog() },
             onTaskCreated = { task -> viewModel.createTask(task) }

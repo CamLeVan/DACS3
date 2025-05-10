@@ -4,24 +4,15 @@ import android.content.Intent
 import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,7 +23,6 @@ import androidx.navigation.NavController
 import com.example.taskapplication.domain.model.Document
 import com.example.taskapplication.domain.model.DocumentPermission
 import com.example.taskapplication.domain.model.DocumentVersion
-import com.example.taskapplication.ui.animation.AnimationUtils
 import com.example.taskapplication.ui.components.ErrorText
 import com.example.taskapplication.ui.components.LoadingIndicator
 import com.example.taskapplication.util.DateConverter
@@ -74,7 +64,7 @@ fun DocumentDetailScreen(
                 title = { Text(document?.name ?: "Chi tiết tài liệu") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
                     }
                 },
                 actions = {
@@ -104,27 +94,11 @@ fun DocumentDetailScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            AnimatedVisibility(
-                visible = isLoading,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
+            if (isLoading) {
                 LoadingIndicator()
-            }
-
-            AnimatedVisibility(
-                visible = error != null,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
-                error?.let { ErrorText(it) }
-            }
-
-            AnimatedVisibility(
-                visible = !isLoading && error == null,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
+            } else if (error != null) {
+                ErrorText(error)
+            } else {
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -146,54 +120,44 @@ fun DocumentDetailScreen(
                         )
                     }
 
-                    AnimatedContent(
-                        targetState = selectedTabIndex,
-                        transitionSpec = { AnimationUtils.tabContentTransition(initialState, targetState) },
-                        label = "Tab Content Animation"
-                    ) { targetTabIndex ->
-                        when (targetTabIndex) {
-                            0 -> DocumentInfoTab(document)
-                            1 -> DocumentVersionsTab(
-                                versions = versions,
-                                onDownload = { versionId ->
-                                    scope.launch {
-                                        val result = viewModel.downloadDocument(documentId, versionId)
-                                        if (result is Resource.Success && result.data != null) {
-                                            val file = result.data
-                                            val uri = FileProvider.getUriForFile(
-                                                context,
-                                                "${context.packageName}.provider",
-                                                file
-                                            )
-                                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                                setDataAndType(uri, getMimeType(file))
-                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                            }
-                                            context.startActivity(intent)
+                    when (selectedTabIndex) {
+                        0 -> DocumentInfoTab(document)
+                        1 -> DocumentVersionsTab(
+                            versions = versions,
+                            onDownload = { versionId ->
+                                scope.launch {
+                                    val result = viewModel.downloadDocument(documentId, versionId)
+                                    if (result is Resource.Success && result.data != null) {
+                                        val file = result.data
+                                        val uri = FileProvider.getUriForFile(
+                                            context,
+                                            "${context.packageName}.provider",
+                                            file
+                                        )
+                                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                                            setDataAndType(uri, getMimeType(file))
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
+                                        context.startActivity(intent)
                                     }
                                 }
-                            )
-                            2 -> DocumentPermissionsTab(
-                                permissions = documentDetailState.permissions,
-                                onDeletePermission = { permission ->
-                                    scope.launch {
-                                        viewModel.deletePermission(documentId, permission.userId)
-                                    }
+                            }
+                        )
+                        2 -> DocumentPermissionsTab(
+                            permissions = documentDetailState.permissions,
+                            onDeletePermission = { permission ->
+                                scope.launch {
+                                    viewModel.deletePermission(documentId, permission.userId)
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
                 }
             }
         }
     }
 
-    AnimatedVisibility(
-        visible = showDeleteDialog,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
+    if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Xóa tài liệu") },
@@ -218,29 +182,19 @@ fun DocumentDetailScreen(
         )
     }
 
-    AnimatedVisibility(
-        visible = showEditDialog && document != null,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
-        if (document != null) {
-            EditDocumentDialog(
-                document = document,
-                onDismiss = { showEditDialog = false },
-                onSave = { name, description ->
-                    viewModel.updateDocument(documentId, name, description)
-                    showEditDialog = false
-                }
-            )
-        }
+    if (showEditDialog && document != null) {
+        EditDocumentDialog(
+            document = document,
+            onDismiss = { showEditDialog = false },
+            onSave = { name, description ->
+                viewModel.updateDocument(documentId, name, description)
+                showEditDialog = false
+            }
+        )
     }
 
     // Create version dialog
-    AnimatedVisibility(
-        visible = showCreateVersionDialog,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
+    if (showCreateVersionDialog) {
         CreateVersionDialog(
             documentId = documentId,
             onDismiss = { showCreateVersionDialog = false },
@@ -254,11 +208,7 @@ fun DocumentDetailScreen(
     }
 
     // Create permission dialog
-    AnimatedVisibility(
-        visible = showCreatePermissionDialog,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
+    if (showCreatePermissionDialog) {
         CreatePermissionDialog(
             documentId = documentId,
             onDismiss = { showCreatePermissionDialog = false },
@@ -270,33 +220,27 @@ fun DocumentDetailScreen(
     }
 
     // Delete permission dialog
-    AnimatedVisibility(
-        visible = showDeletePermissionDialog != null,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
-        showDeletePermissionDialog?.let { permission ->
-            AlertDialog(
-                onDismissRequest = { showDeletePermissionDialog = null },
-                title = { Text("Xóa quyền truy cập") },
-                text = { Text("Bạn có chắc chắn muốn xóa quyền truy cập của người dùng này?") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            viewModel.deletePermission(permission.documentId, permission.userId)
-                            showDeletePermissionDialog = null
-                        }
-                    ) {
-                        Text("Xóa")
+    showDeletePermissionDialog?.let { permission ->
+        AlertDialog(
+            onDismissRequest = { showDeletePermissionDialog = null },
+            title = { Text("Xóa quyền truy cập") },
+            text = { Text("Bạn có chắc chắn muốn xóa quyền truy cập của người dùng này?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deletePermission(permission.documentId, permission.userId)
+                        showDeletePermissionDialog = null
                     }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDeletePermissionDialog = null }) {
-                        Text("Hủy")
-                    }
+                ) {
+                    Text("Xóa")
                 }
-            )
-        }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeletePermissionDialog = null }) {
+                    Text("Hủy")
+                }
+            }
+        )
     }
 }
 
@@ -306,28 +250,18 @@ private fun DocumentInfoTab(document: Document?) {
         return
     }
 
-    val infoItems = listOf(
-        "Tên" to document.name,
-        "Mô tả" to (document.description ?: ""),
-        "Loại file" to document.fileType,
-        "Kích thước" to document.getFormattedFileSize(),
-        "Ngày tải lên" to DateConverter.formatLong(document.uploadedAt),
-        "Chỉnh sửa lần cuối" to DateConverter.formatLong(document.lastModified)
-    )
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        itemsIndexed(infoItems) { index, (label, value) ->
-            AnimatedVisibility(
-                visible = true,
-                enter = AnimationUtils.listItemEnterAnimation(index),
-                exit = AnimationUtils.listItemExitAnimation
-            ) {
-                InfoItem(label, value)
-            }
+        item {
+            InfoItem("Tên", document.name)
+            InfoItem("Mô tả", document.description ?: "")
+            InfoItem("Loại file", document.fileType)
+            InfoItem("Kích thước", document.getFormattedFileSize())
+            InfoItem("Ngày tải lên", DateConverter.formatLong(document.uploadedAt))
+            InfoItem("Chỉnh sửa lần cuối", DateConverter.formatLong(document.lastModified))
         }
     }
 }
@@ -352,14 +286,8 @@ private fun DocumentVersionsTab(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        itemsIndexed(versions) { index, version ->
-            AnimatedVisibility(
-                visible = true,
-                enter = AnimationUtils.listItemEnterAnimation(index),
-                exit = AnimationUtils.listItemExitAnimation
-            ) {
-                VersionItem(version, onDownload)
-            }
+        items(versions) { version ->
+            VersionItem(version, onDownload)
         }
     }
 }
@@ -389,35 +317,10 @@ private fun VersionItem(
     version: DocumentVersion,
     onDownload: (String) -> Unit
 ) {
-    var isHovered by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isHovered) 1.02f else 1f,
-        animationSpec = tween(durationMillis = 150),
-        label = "Card Scale Animation"
-    )
-    val elevation by animateDpAsState(
-        targetValue = if (isHovered) 4.dp else 1.dp,
-        animationSpec = tween(durationMillis = 150),
-        label = "Card Elevation Animation"
-    )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                this.shadowElevation = elevation.toPx()
-            }
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        isHovered = event.type == PointerEventType.Enter
-                    }
-                }
-            }
     ) {
         Row(
             modifier = Modifier
@@ -442,15 +345,8 @@ private fun VersionItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            IconButton(
-                onClick = { onDownload(version.id) },
-                modifier = Modifier.scale(if (isHovered) 1.1f else 1f)
-            ) {
-                Icon(
-                    Icons.Default.Download,
-                    contentDescription = "Tải xuống",
-                    tint = if (isHovered) MaterialTheme.colorScheme.primary else LocalContentColor.current
-                )
+            IconButton(onClick = { onDownload(version.id) }) {
+                Icon(Icons.Default.Download, contentDescription = "Tải xuống")
             }
         }
     }
@@ -531,14 +427,8 @@ private fun DocumentPermissionsTab(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        itemsIndexed(permissions) { index, permission ->
-            AnimatedVisibility(
-                visible = true,
-                enter = AnimationUtils.listItemEnterAnimation(index),
-                exit = AnimationUtils.listItemExitAnimation
-            ) {
-                PermissionItem(permission, onDeletePermission)
-            }
+        items(permissions) { permission ->
+            PermissionItem(permission, onDeletePermission)
         }
     }
 }
@@ -551,35 +441,10 @@ private fun PermissionItem(
     permission: DocumentPermission,
     onDelete: (DocumentPermission) -> Unit
 ) {
-    var isHovered by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isHovered) 1.02f else 1f,
-        animationSpec = tween(durationMillis = 150),
-        label = "Permission Card Scale Animation"
-    )
-    val elevation by animateDpAsState(
-        targetValue = if (isHovered) 4.dp else 1.dp,
-        animationSpec = tween(durationMillis = 150),
-        label = "Permission Card Elevation Animation"
-    )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                this.shadowElevation = elevation.toPx()
-            }
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        isHovered = event.type == PointerEventType.Enter
-                    }
-                }
-            }
     ) {
         Row(
             modifier = Modifier
@@ -609,15 +474,8 @@ private fun PermissionItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            IconButton(
-                onClick = { onDelete(permission) },
-                modifier = Modifier.scale(if (isHovered) 1.1f else 1f)
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Xóa quyền",
-                    tint = if (isHovered) MaterialTheme.colorScheme.error else LocalContentColor.current
-                )
+            IconButton(onClick = { onDelete(permission) }) {
+                Icon(Icons.Default.Delete, contentDescription = "Xóa quyền")
             }
         }
     }
@@ -635,3 +493,46 @@ private fun getPermissionTypeText(permissionType: String): String {
     }
 }
 
+@Composable
+private fun EditDocumentDialog(
+    document: Document,
+    onDismiss: () -> Unit,
+    onSave: (String, String) -> Unit
+) {
+    var name by remember { mutableStateOf(document.name) }
+    var description by remember { mutableStateOf(document.description ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Document") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(name, description) }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}

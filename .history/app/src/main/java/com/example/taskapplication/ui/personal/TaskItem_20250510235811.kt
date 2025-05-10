@@ -142,29 +142,15 @@ fun TaskItem(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Checkbox với màu tùy chỉnh và hiệu ứng khi hover
-            val checkboxScale by animateFloatAsState(
-                targetValue = if (isHovered) 1.1f else 1f,
-                animationSpec = tween(durationMillis = 150),
-                label = "Checkbox Scale Animation"
-            )
-
-            Box(
-                modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = checkboxScale
-                        scaleY = checkboxScale
-                    }
-            ) {
-                Checkbox(
-                    checked = task.isCompleted,
-                    onCheckedChange = { onCompleteClick() },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = MaterialTheme.colorScheme.primary,
-                        uncheckedColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                    )
+            // Checkbox với màu tùy chỉnh
+            Checkbox(
+                checked = task.isCompleted,
+                onCheckedChange = { onCompleteClick() },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.primary,
+                    uncheckedColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                 )
-            }
+            )
 
             Spacer(modifier = Modifier.width(12.dp))
 

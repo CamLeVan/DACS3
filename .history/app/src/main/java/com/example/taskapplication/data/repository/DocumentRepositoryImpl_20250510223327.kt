@@ -9,7 +9,6 @@ import com.example.taskapplication.data.mapper.toDomain
 import com.example.taskapplication.data.mapper.toEntity
 import com.example.taskapplication.data.remote.ApiService
 import com.example.taskapplication.data.remote.api.DocumentApiService
-import com.example.taskapplication.data.remote.dto.toDomain
 import com.example.taskapplication.data.remote.request.CreateDocumentVersionRequest
 import com.example.taskapplication.data.remote.request.CreateDocumentPermissionRequest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -48,7 +47,6 @@ class DocumentRepositoryImpl @Inject constructor(
     private val documentVersionDao: DocumentVersionDao,
     private val documentPermissionDao: DocumentPermissionDao,
     private val apiService: ApiService,
-    private val documentApiService: DocumentApiService,
     private val networkUtils: NetworkUtils,
     @ApplicationContext private val context: Context
 ) : DocumentRepository {
@@ -251,47 +249,7 @@ class DocumentRepositoryImpl @Inject constructor(
     }
 
     override suspend fun downloadDocument(documentId: String, versionId: String?): Resource<File> {
-        return withContext(Dispatchers.IO) {
-            try {
-                if (!networkUtils.isNetworkAvailable()) {
-                    return@withContext Resource.Error("Không có kết nối mạng")
-                }
-
-                val response = if (versionId != null) {
-                    // Tải phiên bản cụ thể
-                    val version = documentVersionDao.getVersionById(versionId)
-                    if (version == null) {
-                        return@withContext Resource.Error("Không tìm thấy phiên bản")
-                    }
-                    apiService.downloadVersion(documentId, version.versionNumber)
-                } else {
-                    // Tải phiên bản mới nhất
-                    apiService.downloadDocument(documentId)
-                }
-
-                if (!response.isSuccessful || response.body() == null) {
-                    return@withContext Resource.Error("Không thể tải tài liệu: ${response.message()}")
-                }
-
-                // Lưu file vào bộ nhớ cục bộ
-                val responseBody = response.body()!!
-                val tempFile = File.createTempFile("download_", ".tmp", context.cacheDir)
-
-                tempFile.outputStream().use { fileOutputStream ->
-                    responseBody.byteStream().use { inputStream ->
-                        inputStream.copyTo(fileOutputStream)
-                    }
-                }
-
-                // Lưu vào thư mục documents
-                val savedFile = saveFileLocally(tempFile, documentId)
-                tempFile.delete() // Xóa file tạm
-
-                return@withContext Resource.Success(savedFile)
-            } catch (e: Exception) {
-                return@withContext Resource.Error("Lỗi khi tải tài liệu: ${e.message}")
-            }
-        }
+        return Resource.Error("Chức năng chưa được triển khai")
     }
 
     override fun searchDocuments(teamId: String, query: String): Flow<Resource<List<Document>>> {
@@ -322,107 +280,15 @@ class DocumentRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getVersionById(versionId: String): Resource<DocumentVersion> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val localVersion = documentVersionDao.getVersionById(versionId)
-                if (localVersion != null) {
-                    return@withContext Resource.Success(localVersion.toDomain())
-                } else {
-                    return@withContext Resource.Error("Không tìm thấy phiên bản")
-                }
-            } catch (e: Exception) {
-                return@withContext Resource.Error("Không thể tải thông tin phiên bản: ${e.message}")
-            }
-        }
+        return Resource.Error("Chức năng chưa được triển khai")
     }
 
     override suspend fun getLatestVersion(documentId: String): Resource<DocumentVersion> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val document = documentDao.getDocumentById(documentId)
-                if (document == null) {
-                    return@withContext Resource.Error("Không tìm thấy tài liệu")
-                }
-
-                val latestVersionId = document.latestVersionId
-                if (latestVersionId == null) {
-                    return@withContext Resource.Error("Tài liệu chưa có phiên bản nào")
-                }
-
-                val latestVersion = documentVersionDao.getVersionById(latestVersionId)
-                if (latestVersion != null) {
-                    return@withContext Resource.Success(latestVersion.toDomain())
-                } else {
-                    return@withContext Resource.Error("Không tìm thấy phiên bản mới nhất")
-                }
-            } catch (e: Exception) {
-                return@withContext Resource.Error("Không thể tải phiên bản mới nhất: ${e.message}")
-            }
-        }
+        return Resource.Error("Chức năng chưa được triển khai")
     }
 
     override suspend fun createVersion(version: DocumentVersion, file: File): Resource<DocumentVersion> {
-        return withContext(Dispatchers.IO) {
-            try {
-                // Lấy số phiên bản tiếp theo
-                val nextVersionNumber = documentVersionDao.getNextVersionNumber(version.documentId)
-
-                // Tạo phiên bản mới cục bộ
-                val localId = UUID.randomUUID().toString()
-                val localVersion = version.copy(
-                    id = localId,
-                    versionNumber = nextVersionNumber,
-                    fileSize = file.length(),
-                    uploadedAt = System.currentTimeMillis(),
-                    syncStatus = "pending_create"
-                )
-
-                // Lưu vào cơ sở dữ liệu cục bộ
-                documentVersionDao.insertVersion(localVersion.toEntity())
-
-                // Cập nhật phiên bản mới nhất của tài liệu
-                documentDao.updateDocumentLatestVersion(version.documentId, localId, System.currentTimeMillis())
-
-                // Lưu file vào bộ nhớ cục bộ
-                val savedFile = saveFileLocally(file, "${version.documentId}_v${nextVersionNumber}")
-
-                // Đồng bộ với API nếu có kết nối mạng
-                if (networkUtils.isNetworkAvailable()) {
-                    try {
-                        val request = CreateDocumentVersionRequest(
-                            changeNotes = localVersion.changeNotes
-                        )
-
-                        val requestBody = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
-                        val filePart = MultipartBody.Part.createFormData("file", file.name, requestBody)
-
-                        val response = documentApiService.createVersion(
-                            documentId = version.documentId,
-                            request = request,
-                            file = filePart
-                        )
-
-                        // Cập nhật thông tin từ server
-                        val serverVersion = response.data.toDomain()
-                        val updatedVersion = localVersion.copy(
-                            serverId = serverVersion.id,
-                            syncStatus = "synced"
-                        )
-
-                        documentVersionDao.insertVersion(updatedVersion.toEntity())
-                        return@withContext Resource.Success(updatedVersion)
-                    } catch (e: Exception) {
-                        // Giữ phiên bản cục bộ, sẽ đồng bộ sau
-                        return@withContext Resource.Success(localVersion)
-                    }
-                } else {
-                    // Không có kết nối mạng, giữ phiên bản cục bộ
-                    return@withContext Resource.Success(localVersion)
-                }
-            } catch (e: Exception) {
-                return@withContext Resource.Error("Không thể tạo phiên bản mới: ${e.message}")
-            }
-        }
+        return Resource.Error("Chức năng chưa được triển khai")
     }
 
     // Document Permissions
@@ -440,161 +306,20 @@ class DocumentRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUserPermission(documentId: String, userId: String): Resource<DocumentPermission> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val localPermission = documentPermissionDao.getUserPermission(documentId, userId)
-                if (localPermission != null) {
-                    return@withContext Resource.Success(localPermission.toDomain())
-                } else {
-                    return@withContext Resource.Error("Không tìm thấy quyền truy cập")
-                }
-            } catch (e: Exception) {
-                return@withContext Resource.Error("Không thể tải thông tin quyền truy cập: ${e.message}")
-            }
-        }
+        return Resource.Error("Chức năng chưa được triển khai")
     }
 
     override suspend fun createPermission(permission: DocumentPermission): Resource<DocumentPermission> {
-        return withContext(Dispatchers.IO) {
-            try {
-                // Tạo quyền truy cập mới cục bộ
-                val localId = UUID.randomUUID().toString()
-                val localPermission = permission.copy(
-                    id = localId,
-                    grantedAt = System.currentTimeMillis(),
-                    syncStatus = "pending_create"
-                )
-
-                // Lưu vào cơ sở dữ liệu cục bộ
-                documentPermissionDao.insertPermission(localPermission.toEntity())
-
-                // Đồng bộ với API nếu có kết nối mạng
-                if (networkUtils.isNetworkAvailable()) {
-                    try {
-                        val request = CreateDocumentPermissionRequest(
-                            userId = localPermission.userId,
-                            permissionType = localPermission.permissionType
-                        )
-
-                        val response = documentApiService.createPermission(
-                            documentId = permission.documentId,
-                            request = request
-                        )
-
-                        // Cập nhật thông tin từ server
-                        val serverPermission = response.data.toDomain()
-                        val updatedPermission = localPermission.copy(
-                            serverId = serverPermission.id,
-                            syncStatus = "synced"
-                        )
-
-                        documentPermissionDao.insertPermission(updatedPermission.toEntity())
-                        return@withContext Resource.Success(updatedPermission)
-                    } catch (e: Exception) {
-                        // Giữ quyền truy cập cục bộ, sẽ đồng bộ sau
-                        return@withContext Resource.Success(localPermission)
-                    }
-                } else {
-                    // Không có kết nối mạng, giữ quyền truy cập cục bộ
-                    return@withContext Resource.Success(localPermission)
-                }
-            } catch (e: Exception) {
-                return@withContext Resource.Error("Không thể tạo quyền truy cập: ${e.message}")
-            }
-        }
+        return Resource.Error("Chức năng chưa được triển khai")
     }
 
     override suspend fun deletePermission(documentId: String, userId: String): Resource<Unit> {
-        return withContext(Dispatchers.IO) {
-            try {
-                // Xóa quyền truy cập cục bộ
-                documentPermissionDao.deletePermission(documentId, userId)
-
-                // Đồng bộ với API nếu có kết nối mạng
-                if (networkUtils.isNetworkAvailable()) {
-                    try {
-                        documentApiService.deletePermission(documentId, userId)
-                    } catch (e: Exception) {
-                        // Bỏ qua lỗi, đã xóa cục bộ
-                    }
-                }
-
-                return@withContext Resource.Success(Unit)
-            } catch (e: Exception) {
-                return@withContext Resource.Error("Không thể xóa quyền truy cập: ${e.message}")
-            }
-        }
+        return Resource.Error("Chức năng chưa được triển khai")
     }
 
     // Synchronization
     override suspend fun syncDocuments(): Resource<Unit> {
-        return withContext(Dispatchers.IO) {
-            try {
-                if (!networkUtils.isNetworkAvailable()) {
-                    return@withContext Resource.Error("Không có kết nối mạng")
-                }
-
-                // Đồng bộ các tài liệu đang chờ tạo
-                val pendingCreateDocuments = documentDao.getDocumentsByTeam("").filter { it.syncStatus == "pending_create" }
-                for (document in pendingCreateDocuments) {
-                    try {
-                        // Tạo tài liệu trên server
-                        // Lưu ý: Cần triển khai thêm phương thức để tải file lên server
-                        // Đây chỉ là phần đồng bộ thông tin cơ bản
-
-                        // Cập nhật trạng thái đồng bộ
-                        val updatedDocument = document.copy(syncStatus = "synced")
-                        documentDao.updateDocument(updatedDocument)
-                    } catch (e: Exception) {
-                        // Bỏ qua lỗi, sẽ thử lại sau
-                    }
-                }
-
-                // Đồng bộ các tài liệu đang chờ cập nhật
-                val pendingUpdateDocuments = documentDao.getDocumentsByTeam("").filter { it.syncStatus == "pending_update" }
-                for (document in pendingUpdateDocuments) {
-                    try {
-                        // Cập nhật tài liệu trên server
-
-                        // Cập nhật trạng thái đồng bộ
-                        val updatedDocument = document.copy(syncStatus = "synced")
-                        documentDao.updateDocument(updatedDocument)
-                    } catch (e: Exception) {
-                        // Bỏ qua lỗi, sẽ thử lại sau
-                    }
-                }
-
-                // Đồng bộ các phiên bản đang chờ tạo
-                val pendingCreateVersions = documentVersionDao.getUnSyncedVersions()
-                for (version in pendingCreateVersions) {
-                    try {
-                        // Tạo phiên bản trên server
-
-                        // Cập nhật trạng thái đồng bộ
-                        documentVersionDao.updateVersionSyncStatus(version.id, "synced", null)
-                    } catch (e: Exception) {
-                        // Bỏ qua lỗi, sẽ thử lại sau
-                    }
-                }
-
-                // Đồng bộ các quyền truy cập đang chờ tạo
-                val pendingCreatePermissions = documentPermissionDao.getUnSyncedPermissions()
-                for (permission in pendingCreatePermissions) {
-                    try {
-                        // Tạo quyền truy cập trên server
-
-                        // Cập nhật trạng thái đồng bộ
-                        documentPermissionDao.updatePermissionSyncStatus(permission.id, "synced", null)
-                    } catch (e: Exception) {
-                        // Bỏ qua lỗi, sẽ thử lại sau
-                    }
-                }
-
-                return@withContext Resource.Success(Unit)
-            } catch (e: Exception) {
-                return@withContext Resource.Error("Lỗi khi đồng bộ tài liệu: ${e.message}")
-            }
-        }
+        return Resource.Error("Chức năng chưa được triển khai")
     }
 
     // Helper methods

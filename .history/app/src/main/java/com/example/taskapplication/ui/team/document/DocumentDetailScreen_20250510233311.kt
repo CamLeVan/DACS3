@@ -21,7 +21,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.ui.platform.LocalContentColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -104,27 +104,11 @@ fun DocumentDetailScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            AnimatedVisibility(
-                visible = isLoading,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
+            if (isLoading) {
                 LoadingIndicator()
-            }
-
-            AnimatedVisibility(
-                visible = error != null,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
-                error?.let { ErrorText(it) }
-            }
-
-            AnimatedVisibility(
-                visible = !isLoading && error == null,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
+            } else if (error != null) {
+                ErrorText(error)
+            } else {
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -189,11 +173,7 @@ fun DocumentDetailScreen(
         }
     }
 
-    AnimatedVisibility(
-        visible = showDeleteDialog,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
+    if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Xóa tài liệu") },
@@ -218,29 +198,19 @@ fun DocumentDetailScreen(
         )
     }
 
-    AnimatedVisibility(
-        visible = showEditDialog && document != null,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
-        if (document != null) {
-            EditDocumentDialog(
-                document = document,
-                onDismiss = { showEditDialog = false },
-                onSave = { name, description ->
-                    viewModel.updateDocument(documentId, name, description)
-                    showEditDialog = false
-                }
-            )
-        }
+    if (showEditDialog && document != null) {
+        EditDocumentDialog(
+            document = document,
+            onDismiss = { showEditDialog = false },
+            onSave = { name, description ->
+                viewModel.updateDocument(documentId, name, description)
+                showEditDialog = false
+            }
+        )
     }
 
     // Create version dialog
-    AnimatedVisibility(
-        visible = showCreateVersionDialog,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
+    if (showCreateVersionDialog) {
         CreateVersionDialog(
             documentId = documentId,
             onDismiss = { showCreateVersionDialog = false },
@@ -254,11 +224,7 @@ fun DocumentDetailScreen(
     }
 
     // Create permission dialog
-    AnimatedVisibility(
-        visible = showCreatePermissionDialog,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
+    if (showCreatePermissionDialog) {
         CreatePermissionDialog(
             documentId = documentId,
             onDismiss = { showCreatePermissionDialog = false },
@@ -270,33 +236,27 @@ fun DocumentDetailScreen(
     }
 
     // Delete permission dialog
-    AnimatedVisibility(
-        visible = showDeletePermissionDialog != null,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
-        showDeletePermissionDialog?.let { permission ->
-            AlertDialog(
-                onDismissRequest = { showDeletePermissionDialog = null },
-                title = { Text("Xóa quyền truy cập") },
-                text = { Text("Bạn có chắc chắn muốn xóa quyền truy cập của người dùng này?") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            viewModel.deletePermission(permission.documentId, permission.userId)
-                            showDeletePermissionDialog = null
-                        }
-                    ) {
-                        Text("Xóa")
+    showDeletePermissionDialog?.let { permission ->
+        AlertDialog(
+            onDismissRequest = { showDeletePermissionDialog = null },
+            title = { Text("Xóa quyền truy cập") },
+            text = { Text("Bạn có chắc chắn muốn xóa quyền truy cập của người dùng này?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deletePermission(permission.documentId, permission.userId)
+                        showDeletePermissionDialog = null
                     }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDeletePermissionDialog = null }) {
-                        Text("Hủy")
-                    }
+                ) {
+                    Text("Xóa")
                 }
-            )
-        }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeletePermissionDialog = null }) {
+                    Text("Hủy")
+                }
+            }
+        )
     }
 }
 
@@ -551,35 +511,10 @@ private fun PermissionItem(
     permission: DocumentPermission,
     onDelete: (DocumentPermission) -> Unit
 ) {
-    var isHovered by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isHovered) 1.02f else 1f,
-        animationSpec = tween(durationMillis = 150),
-        label = "Permission Card Scale Animation"
-    )
-    val elevation by animateDpAsState(
-        targetValue = if (isHovered) 4.dp else 1.dp,
-        animationSpec = tween(durationMillis = 150),
-        label = "Permission Card Elevation Animation"
-    )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                this.shadowElevation = elevation.toPx()
-            }
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        isHovered = event.type == PointerEventType.Enter
-                    }
-                }
-            }
     ) {
         Row(
             modifier = Modifier
@@ -609,15 +544,8 @@ private fun PermissionItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            IconButton(
-                onClick = { onDelete(permission) },
-                modifier = Modifier.scale(if (isHovered) 1.1f else 1f)
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Xóa quyền",
-                    tint = if (isHovered) MaterialTheme.colorScheme.error else LocalContentColor.current
-                )
+            IconButton(onClick = { onDelete(permission) }) {
+                Icon(Icons.Default.Delete, contentDescription = "Xóa quyền")
             }
         }
     }

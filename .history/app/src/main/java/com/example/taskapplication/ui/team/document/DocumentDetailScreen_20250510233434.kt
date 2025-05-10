@@ -21,7 +21,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.ui.platform.LocalContentColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -104,27 +104,11 @@ fun DocumentDetailScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            AnimatedVisibility(
-                visible = isLoading,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
+            if (isLoading) {
                 LoadingIndicator()
-            }
-
-            AnimatedVisibility(
-                visible = error != null,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
-                error?.let { ErrorText(it) }
-            }
-
-            AnimatedVisibility(
-                visible = !isLoading && error == null,
-                enter = fadeIn() + expandIn(),
-                exit = fadeOut() + shrinkOut()
-            ) {
+            } else if (error != null) {
+                ErrorText(error)
+            } else {
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {

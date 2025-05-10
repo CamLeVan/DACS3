@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,7 +45,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.taskapplication.R
-import com.example.taskapplication.ui.animation.AnimationUtils
 import com.example.taskapplication.ui.components.EmptyStateView
 import com.example.taskapplication.ui.components.ErrorStateView
 import com.example.taskapplication.ui.theme.ButtonGradientEnd
@@ -159,120 +157,65 @@ fun PersonalTasksScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                val state = tasksState
-
-                // Loading state with animation
-                AnimatedVisibility(
-                    visible = state is PersonalTasksViewModel.TasksState.Loading,
-                    enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
-                    exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center)
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
+                when (val state = tasksState) {
+                    is PersonalTasksViewModel.TasksState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            // Rotating animation for loading indicator
-                            val rotation = rememberInfiniteTransition().animateFloat(
-                                initialValue = 0f,
-                                targetValue = 360f,
-                                animationSpec = infiniteRepeatable(
-                                    animation = tween(1500, easing = LinearEasing),
-                                    repeatMode = RepeatMode.Restart
-                                ),
-                                label = "Loading Rotation"
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(48.dp)
+                                )
 
-                            CircularProgressIndicator(
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .graphicsLayer { rotationZ = rotation.value }
-                            )
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Pulsating text animation
-                            val scale = rememberInfiniteTransition().animateFloat(
-                                initialValue = 0.95f,
-                                targetValue = 1.05f,
-                                animationSpec = infiniteRepeatable(
-                                    animation = tween(1000, easing = FastOutSlowInEasing),
-                                    repeatMode = RepeatMode.Reverse
-                                ),
-                                label = "Text Pulse"
-                            )
-
-                            Text(
-                                text = "Đang tải công việc...",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                                modifier = Modifier.graphicsLayer { scaleX = scale.value; scaleY = scale.value }
-                            )
+                                Text(
+                                    text = "Đang tải công việc...",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                            }
                         }
                     }
-                }
+                    is PersonalTasksViewModel.TasksState.Success -> {
+                        if (state.tasks.isEmpty()) {
+                            // Hiển thị trạng thái trống với animation
+                            EmptyStateView(
+                                message = stringResource(R.string.empty_tasks),
+                                icon = Icons.Default.Info
+                            )
+                        } else {
+                            // Hiển thị danh sách công việc với animation
+                            LazyColumn(
+                                state = listState,
+                                contentPadding = PaddingValues(bottom = 80.dp)
+                            ) {
+                                item {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
 
-                // Success state with empty view
-                AnimatedVisibility(
-                    visible = state is PersonalTasksViewModel.TasksState.Success && (state as? PersonalTasksViewModel.TasksState.Success)?.tasks?.isEmpty() == true,
-                    enter = fadeIn(tween(500)) + expandIn(tween(500), expandFrom = Alignment.Center),
-                    exit = fadeOut(tween(300)) + shrinkOut(tween(300), shrinkTowards = Alignment.Center)
-                ) {
-                    EmptyStateView(
-                        message = stringResource(R.string.empty_tasks),
-                        icon = Icons.Default.Info
-                    )
-                }
-
-                // Success state with task list
-                AnimatedVisibility(
-                    visible = state is PersonalTasksViewModel.TasksState.Success && (state as? PersonalTasksViewModel.TasksState.Success)?.tasks?.isNotEmpty() == true,
-                    enter = fadeIn(tween(500)),
-                    exit = fadeOut(tween(300))
-                ) {
-                    if (state is PersonalTasksViewModel.TasksState.Success && state.tasks.isNotEmpty()) {
-                        LazyColumn(
-                            state = listState,
-                            contentPadding = PaddingValues(bottom = 80.dp)
-                        ) {
-                            item {
-                                Spacer(modifier = Modifier.height(8.dp))
-                            }
-
-                            itemsIndexed(
-                                items = state.tasks,
-                                key = { _, task -> task.id }
-                            ) { index, task ->
-                                AnimatedVisibility(
-                                    visible = true,
-                                    enter = AnimationUtils.listItemEnterAnimation(index),
-                                    exit = AnimationUtils.listItemExitAnimation
-                                ) {
+                                items(
+                                    items = state.tasks,
+                                    key = { it.id }
+                                ) { task ->
                                     TaskItem(
                                         task = task,
                                         onClick = { onTaskClick(task.id) },
                                         onCompleteClick = { viewModel.toggleTaskCompletion(task) }
                                     )
                                 }
-                            }
 
-                            item {
-                                Spacer(modifier = Modifier.height(16.dp))
+                                item {
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                }
                             }
                         }
                     }
-                }
-
-                // Error state with animation
-                AnimatedVisibility(
-                    visible = state is PersonalTasksViewModel.TasksState.Error,
-                    enter = fadeIn(tween(500)) + expandIn(tween(500), expandFrom = Alignment.Center),
-                    exit = fadeOut(tween(300)) + shrinkOut(tween(300), shrinkTowards = Alignment.Center)
-                ) {
-                    if (state is PersonalTasksViewModel.TasksState.Error) {
+                    is PersonalTasksViewModel.TasksState.Error -> {
                         ErrorStateView(
                             message = stringResource(R.string.error_loading_tasks, state.message),
                             onRetryClick = { viewModel.loadTasks() }
@@ -320,11 +263,7 @@ fun PersonalTasksScreen(
     }
 
     // Show add task dialog if necessary
-    AnimatedVisibility(
-        visible = showAddDialog,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
+    if (showAddDialog) {
         AddTaskDialog(
             onDismiss = { viewModel.hideAddTaskDialog() },
             onTaskCreated = { task -> viewModel.createTask(task) }

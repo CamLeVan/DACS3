@@ -9,7 +9,6 @@ import com.example.taskapplication.data.mapper.toDomain
 import com.example.taskapplication.data.mapper.toEntity
 import com.example.taskapplication.data.remote.ApiService
 import com.example.taskapplication.data.remote.api.DocumentApiService
-import com.example.taskapplication.data.remote.dto.toDomain
 import com.example.taskapplication.data.remote.request.CreateDocumentVersionRequest
 import com.example.taskapplication.data.remote.request.CreateDocumentPermissionRequest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -508,7 +507,7 @@ class DocumentRepositoryImpl @Inject constructor(
         return withContext(Dispatchers.IO) {
             try {
                 // Xóa quyền truy cập cục bộ
-                documentPermissionDao.deletePermission(documentId, userId)
+                documentPermissionDao.deleteUserPermission(documentId, userId)
 
                 // Đồng bộ với API nếu có kết nối mạng
                 if (networkUtils.isNetworkAvailable()) {
@@ -535,7 +534,7 @@ class DocumentRepositoryImpl @Inject constructor(
                 }
 
                 // Đồng bộ các tài liệu đang chờ tạo
-                val pendingCreateDocuments = documentDao.getDocumentsByTeam("").filter { it.syncStatus == "pending_create" }
+                val pendingCreateDocuments = documentDao.getPendingCreateDocuments()
                 for (document in pendingCreateDocuments) {
                     try {
                         // Tạo tài liệu trên server
@@ -543,48 +542,46 @@ class DocumentRepositoryImpl @Inject constructor(
                         // Đây chỉ là phần đồng bộ thông tin cơ bản
 
                         // Cập nhật trạng thái đồng bộ
-                        val updatedDocument = document.copy(syncStatus = "synced")
-                        documentDao.updateDocument(updatedDocument)
+                        documentDao.updateSyncStatus(document.id, "synced")
                     } catch (e: Exception) {
                         // Bỏ qua lỗi, sẽ thử lại sau
                     }
                 }
 
                 // Đồng bộ các tài liệu đang chờ cập nhật
-                val pendingUpdateDocuments = documentDao.getDocumentsByTeam("").filter { it.syncStatus == "pending_update" }
+                val pendingUpdateDocuments = documentDao.getPendingUpdateDocuments()
                 for (document in pendingUpdateDocuments) {
                     try {
                         // Cập nhật tài liệu trên server
 
                         // Cập nhật trạng thái đồng bộ
-                        val updatedDocument = document.copy(syncStatus = "synced")
-                        documentDao.updateDocument(updatedDocument)
+                        documentDao.updateSyncStatus(document.id, "synced")
                     } catch (e: Exception) {
                         // Bỏ qua lỗi, sẽ thử lại sau
                     }
                 }
 
                 // Đồng bộ các phiên bản đang chờ tạo
-                val pendingCreateVersions = documentVersionDao.getUnSyncedVersions()
+                val pendingCreateVersions = documentVersionDao.getPendingCreateVersions()
                 for (version in pendingCreateVersions) {
                     try {
                         // Tạo phiên bản trên server
 
                         // Cập nhật trạng thái đồng bộ
-                        documentVersionDao.updateVersionSyncStatus(version.id, "synced", null)
+                        documentVersionDao.updateSyncStatus(version.id, "synced")
                     } catch (e: Exception) {
                         // Bỏ qua lỗi, sẽ thử lại sau
                     }
                 }
 
                 // Đồng bộ các quyền truy cập đang chờ tạo
-                val pendingCreatePermissions = documentPermissionDao.getUnSyncedPermissions()
+                val pendingCreatePermissions = documentPermissionDao.getPendingCreatePermissions()
                 for (permission in pendingCreatePermissions) {
                     try {
                         // Tạo quyền truy cập trên server
 
                         // Cập nhật trạng thái đồng bộ
-                        documentPermissionDao.updatePermissionSyncStatus(permission.id, "synced", null)
+                        documentPermissionDao.updateSyncStatus(permission.id, "synced")
                     } catch (e: Exception) {
                         // Bỏ qua lỗi, sẽ thử lại sau
                     }
