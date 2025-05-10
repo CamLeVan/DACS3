@@ -1,0 +1,109 @@
+package com.example.taskapplication.ui.team.document
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+
+
+/**
+ * Helper function to format date
+ */
+fun formatDate(date: Date): String {
+    val formatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    return formatter.format(date)
+}
+
+
+
+fun getFileExtension(file: File): String {
+    return file.name.substringAfterLast('.', "").lowercase()
+}
+
+fun getFileType(file: File): String {
+    return when (getFileExtension(file)) {
+        "pdf" -> "pdf"
+        "doc", "docx" -> "word"
+        "xls", "xlsx" -> "excel"
+        "ppt", "pptx" -> "powerpoint"
+        "txt" -> "text"
+        "jpg", "jpeg", "png", "gif" -> "image"
+        else -> "unknown"
+    }
+}
+
+fun formatFileSize(bytes: Long): String {
+    if (bytes <= 0) return "0 B"
+    val units = arrayOf("B", "KB", "MB", "GB", "TB")
+    val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt()
+    return String.format("%.1f %s", bytes / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
+}
+
+fun formatDate(timestamp: Long): String {
+    val date = java.util.Date(timestamp)
+    val format = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
+    return format.format(date)
+}
+
+/**
+ * Utility object for document operations
+ */
+object DocumentUtils {
+    /**
+     * Convert Uri to File
+     */
+    fun uriToFile(context: android.content.Context, uri: android.net.Uri): File? {
+        try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val fileName = getFileName(context, uri) ?: "temp_file_${System.currentTimeMillis()}"
+            val tempFile = File(context.cacheDir, fileName)
+
+            tempFile.outputStream().use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+
+            return tempFile
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
+    /**
+     * Get file name from Uri
+     */
+    private fun getFileName(context: android.content.Context, uri: android.net.Uri): String? {
+        var fileName: String? = null
+
+        // Try to get the file name from the content provider
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val displayNameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (displayNameIndex != -1) {
+                    fileName = cursor.getString(displayNameIndex)
+                }
+            }
+        }
+
+        // If we couldn't get the file name from the content provider, try to get it from the URI
+        if (fileName == null) {
+            fileName = uri.lastPathSegment
+        }
+
+        return fileName
+    }
+}

@@ -1,0 +1,306 @@
+package com.example.taskapplication.ui.team
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Task
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.taskapplication.ui.team.detail.InviteState
+import com.example.taskapplication.ui.team.detail.RemoveMemberState
+import com.example.taskapplication.ui.team.detail.RoleChangeState
+import com.example.taskapplication.ui.team.detail.TeamDetailState
+import com.example.taskapplication.ui.team.detail.TeamDetailViewModel
+import com.example.taskapplication.ui.team.detail.TeamMembersState
+import com.example.taskapplication.ui.team.detail.components.InviteMemberDialog
+import com.example.taskapplication.ui.team.detail.components.TeamMemberItem
+
+/**
+ * Screen that displays team details and members
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TeamDetailScreen(
+    viewModel: TeamDetailViewModel = hiltViewModel(),
+    teamId: String,
+    onBackClick: () -> Unit,
+    onChatClick: () -> Unit,
+    onTasksClick: () -> Unit
+) {
+    val teamState by viewModel.teamState.collectAsState()
+    val membersState by viewModel.membersState.collectAsState()
+    val inviteState by viewModel.inviteState.collectAsState()
+    val showInviteDialog by viewModel.showInviteDialog.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show error message in snackbar
+    LaunchedEffect(teamState, membersState) {
+        if (teamState is TeamDetailState.Error) {
+            snackbarHostState.showSnackbar(
+                message = (teamState as TeamDetailState.Error).message
+            )
+        } else if (membersState is TeamMembersState.Error) {
+            snackbarHostState.showSnackbar(
+                message = (membersState as TeamMembersState.Error).message
+            )
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    if (teamState is TeamDetailState.Success) {
+                        Text((teamState as TeamDetailState.Success).team.name)
+                    } else {
+                        Text("Team Details")
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
+        floatingActionButton = {
+            if (teamState is TeamDetailState.Success) {
+                FloatingActionButton(onClick = { viewModel.showInviteDialog() }) {
+                    Icon(Icons.Default.Add, contentDescription = "Invite Member")
+                }
+            }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when (teamState) {
+                is TeamDetailState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                is TeamDetailState.Success -> {
+                    val team = (teamState as TeamDetailState.Success).team
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    ) {
+                        // Team info card
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Group,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+
+                                        Spacer(modifier = Modifier.width(8.dp))
+
+                                        Text(
+                                            text = team.name,
+                                            style = MaterialTheme.typography.headlineSmall
+                                        )
+                                    }
+
+                                    team.description?.let {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = it,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Action buttons
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                Button(
+                                    onClick = onChatClick,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Default.Chat, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Chat")
+                                }
+
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                Button(
+                                    onClick = onTasksClick,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Default.Task, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Tasks")
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            // Team members section header
+                            Text(
+                                text = "Team Members",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Divider()
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        // Team members list
+                        when (membersState) {
+                            is TeamMembersState.Loading -> {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(32.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
+                            }
+
+                            is TeamMembersState.Empty -> {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(32.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "No team members yet. Invite someone to join!",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+
+                            is TeamMembersState.Success -> {
+                                val members = (membersState as TeamMembersState.Success).members
+                                items(members) { member ->
+                                    TeamMemberItem(member = member)
+                                    Divider()
+                                }
+                            }
+
+                            is TeamMembersState.Error -> {
+                                // Error is shown in snackbar
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(32.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Button(onClick = { viewModel.loadTeamMembers() }) {
+                                            Text("Retry loading members")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                is TeamDetailState.Error -> {
+                    // Error is shown in snackbar
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Failed to load team details",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(onClick = { viewModel.loadTeam() }) {
+                            Text("Retry")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Show invite member dialog
+    if (showInviteDialog) {
+        InviteMemberDialog(
+            inviteState = inviteState,
+            onDismiss = { viewModel.hideInviteDialog() },
+            onInvite = { email -> viewModel.inviteUserToTeam(email) }
+        )
+    }
+}

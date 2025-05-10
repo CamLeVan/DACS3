@@ -1,0 +1,78 @@
+package com.example.taskapplication.di
+
+import android.content.Context
+import androidx.room.Room
+import com.example.taskapplication.data.database.AppDatabase
+import com.example.taskapplication.data.database.dao.*
+import com.example.taskapplication.data.local.dao.TeamRoleHistoryDao
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object DatabaseModule {
+
+    @Provides
+    @Singleton
+    fun provideAppDatabase(
+        @ApplicationContext context: Context
+    ): AppDatabase {
+        return Room.databaseBuilder(
+            context,
+            AppDatabase::class.java,
+            "task_app_database"
+        ).build()
+    }
+
+    @Provides
+    @Singleton
+    fun providePersonalTaskDao(database: AppDatabase): PersonalTaskDao {
+        return database.personalTaskDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTeamTaskDao(database: AppDatabase): TeamTaskDao {
+        return database.teamTaskDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideMessageDao(database: AppDatabase): MessageDao {
+        return database.messageDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideMessageReadStatusDao(database: AppDatabase): MessageReadStatusDao {
+        return database.messageReadStatusDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideMessageReactionDao(database: AppDatabase): MessageReactionDao {
+        return database.messageReactionDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTeamDao(database: AppDatabase): TeamDao {
+        return database.teamDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTeamMemberDao(database: AppDatabase): TeamMemberDao {
+        return database.teamMemberDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserDao(database: AppDatabase): UserDao {
+        return database.userDao()
+    }
+}
