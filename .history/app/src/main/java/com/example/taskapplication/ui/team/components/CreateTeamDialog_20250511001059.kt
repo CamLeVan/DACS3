@@ -69,7 +69,7 @@ fun CreateTeamDialog(
                 OutlinedTextField(
                     value = teamName,
                     onValueChange = { teamName = it },
-                    label = { Text("Tên nhóm") },
+                    label = { Text("Team Name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     isError = createTeamState is CreateTeamState.Error
@@ -80,7 +80,7 @@ fun CreateTeamDialog(
                 OutlinedTextField(
                     value = teamDescription,
                     onValueChange = { teamDescription = it },
-                    label = { Text("Mô tả (Không bắt buộc)") },
+                    label = { Text("Description (Optional)") },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     maxLines = 5

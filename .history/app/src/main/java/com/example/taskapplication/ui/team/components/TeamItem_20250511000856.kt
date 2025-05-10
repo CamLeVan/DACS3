@@ -85,27 +85,12 @@ fun TeamItem(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Team icon with animation
-            val iconScale by animateFloatAsState(
-                targetValue = if (isHovered) 1.2f else 1f,
-                animationSpec = tween(durationMillis = 200),
-                label = "Icon Scale Animation"
-            )
-
+            // Team icon
             Icon(
                 imageVector = Icons.Default.Group,
                 contentDescription = null,
-                modifier = Modifier
-                    .size(40.dp)
-                    .graphicsLayer {
-                        scaleX = iconScale
-                        scaleY = iconScale
-                        rotationZ = if (isHovered) 10f else 0f
-                    },
-                tint = if (isHovered)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
 
             Spacer(modifier = Modifier.width(16.dp))

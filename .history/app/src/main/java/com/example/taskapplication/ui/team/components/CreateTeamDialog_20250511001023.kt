@@ -37,7 +37,7 @@ fun CreateTeamDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Tạo nhóm mới") },
+        title = { Text("Create New Team") },
         text = {
             Column(
                 modifier = Modifier.padding(8.dp)
@@ -69,7 +69,7 @@ fun CreateTeamDialog(
                 OutlinedTextField(
                     value = teamName,
                     onValueChange = { teamName = it },
-                    label = { Text("Tên nhóm") },
+                    label = { Text("Team Name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     isError = createTeamState is CreateTeamState.Error
@@ -80,7 +80,7 @@ fun CreateTeamDialog(
                 OutlinedTextField(
                     value = teamDescription,
                     onValueChange = { teamDescription = it },
-                    label = { Text("Mô tả (Không bắt buộc)") },
+                    label = { Text("Description (Optional)") },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     maxLines = 5
@@ -149,24 +149,11 @@ fun CreateTeamDialog(
             }
         },
         dismissButton = {
-            // Cancel button with animation
-            val cancelEnabled = createTeamState !is CreateTeamState.Loading
-            val cancelScale by animateFloatAsState(
-                targetValue = if (cancelEnabled) 1f else 0.95f,
-                animationSpec = tween(150),
-                label = "Cancel Button Scale Animation"
-            )
-
             TextButton(
                 onClick = onDismiss,
-                enabled = cancelEnabled,
-                modifier = Modifier.graphicsLayer {
-                    scaleX = cancelScale
-                    scaleY = cancelScale
-                    alpha = if (cancelEnabled) 1f else 0.6f
-                }
+                enabled = createTeamState !is CreateTeamState.Loading
             ) {
-                Text("Hủy")
+                Text("Cancel")
             }
         }
     )

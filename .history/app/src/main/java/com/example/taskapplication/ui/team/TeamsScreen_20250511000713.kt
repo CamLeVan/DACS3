@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.example.taskapplication.ui.animation.AnimationUtils
-import kotlinx.coroutines.delay
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.taskapplication.ui.team.components.CreateTeamDialog
 import com.example.taskapplication.ui.team.components.TeamItem
@@ -62,7 +61,7 @@ fun TeamsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Nhóm") }
+                title = { Text("Teams") }
             )
         },
         floatingActionButton = {
@@ -210,7 +209,7 @@ fun TeamsScreen(
                 exit = fadeOut(tween(300))
             ) {
                 if (teamsState is TeamsState.Success) {
-                    val teams = (teamsState as TeamsState.Success).teams
+                    val teams = teamsState.teams
                     LazyColumn {
                         itemsIndexed(teams) { index, team ->
                             AnimatedVisibility(
@@ -260,21 +259,21 @@ fun TeamsScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    val pulse = rememberInfiniteTransition().animateFloat(
-                        initialValue = 0.95f,
-                        targetValue = 1.05f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(500, easing = FastOutSlowInEasing),
-                            repeatMode = RepeatMode.Reverse
-                        ),
-                        label = "Retry Button Pulse"
-                    )
-
                     Button(
                         onClick = { viewModel.loadTeams() },
                         modifier = Modifier.graphicsLayer {
-                            scaleX = pulse.value
-                            scaleY = pulse.value
+                            // Subtle pulse for retry button
+                            val pulse = rememberInfiniteTransition().animateFloat(
+                                initialValue = 0.95f,
+                                targetValue = 1.05f,
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(500, easing = FastOutSlowInEasing),
+                                    repeatMode = RepeatMode.Reverse
+                                ),
+                                label = "Retry Button Pulse"
+                            ).value
+                            scaleX = pulse
+                            scaleY = pulse
                         }
                     ) {
                         Text("Thử lại")
@@ -284,12 +283,8 @@ fun TeamsScreen(
         }
     }
 
-    // Show create team dialog with animation
-    AnimatedVisibility(
-        visible = showCreateTeamDialog,
-        enter = AnimationUtils.dialogEnterAnimation,
-        exit = AnimationUtils.dialogExitAnimation
-    ) {
+    // Show create team dialog
+    if (showCreateTeamDialog) {
         CreateTeamDialog(
             createTeamState = createTeamState,
             onDismiss = { viewModel.hideCreateTeamDialog() },
