@@ -429,21 +429,29 @@ fun AccessLevelOption(
         label = "Option Scale Animation"
     )
 
-    // Background color based on state
-    val backgroundColor = when {
-        selected && isHovered -> MaterialTheme.colorScheme.primary
-        selected -> MaterialTheme.colorScheme.primaryContainer
-        isHovered -> MaterialTheme.colorScheme.surfaceVariant
-        else -> MaterialTheme.colorScheme.surface
-    }
+    // Background color animation
+    val backgroundColor by animateColorAsState(
+        targetValue = when {
+            selected && isHovered -> MaterialTheme.colorScheme.primary
+            selected -> MaterialTheme.colorScheme.primaryContainer
+            isHovered -> MaterialTheme.colorScheme.surfaceVariant
+            else -> MaterialTheme.colorScheme.surface
+        },
+        animationSpec = tween(durationMillis = 200),
+        label = "Background Color Animation"
+    )
 
-    // Text color based on state
-    val textColor = when {
-        selected && isHovered -> MaterialTheme.colorScheme.onPrimary
-        selected -> MaterialTheme.colorScheme.onPrimaryContainer
-        isHovered -> MaterialTheme.colorScheme.onSurfaceVariant
-        else -> MaterialTheme.colorScheme.onSurface
-    }
+    // Text color animation
+    val textColor by animateColorAsState(
+        targetValue = when {
+            selected && isHovered -> MaterialTheme.colorScheme.onPrimary
+            selected -> MaterialTheme.colorScheme.onPrimaryContainer
+            isHovered -> MaterialTheme.colorScheme.onSurfaceVariant
+            else -> MaterialTheme.colorScheme.onSurface
+        },
+        animationSpec = tween(durationMillis = 200),
+        label = "Text Color Animation"
+    )
 
     Box(
         modifier = Modifier

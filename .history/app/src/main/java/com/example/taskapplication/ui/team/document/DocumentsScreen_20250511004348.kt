@@ -74,7 +74,6 @@ import com.example.taskapplication.domain.model.DocumentFolder
 import com.example.taskapplication.ui.animation.AnimationUtils
 import com.example.taskapplication.ui.components.ErrorText
 import com.example.taskapplication.ui.components.LoadingIndicator
-import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -235,95 +234,19 @@ fun DocumentsScreen(
         },
         floatingActionButton = {
             Column {
-                // Add document FAB with animation
-                val docFabScale = remember { Animatable(0.6f) }
-                LaunchedEffect(Unit) {
-                    delay(300) // Delay for staggered effect
-                    docFabScale.animateTo(
-                        targetValue = 1f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    )
-                }
-
-                var isDocFabHovered by remember { mutableStateOf(false) }
-                val docHoverScale by animateFloatAsState(
-                    targetValue = if (isDocFabHovered) 1.1f else 1f,
-                    animationSpec = tween(150),
-                    label = "Doc FAB Hover Scale"
-                )
-
+                // Add document FAB
                 FloatingActionButton(
                     onClick = { filePickerLauncher.launch("*/*") },
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .graphicsLayer {
-                            scaleX = docFabScale.value * docHoverScale
-                            scaleY = docFabScale.value * docHoverScale
-                        }
-                        .pointerInput(Unit) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    isDocFabHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                                }
-                            }
-                        }
+                    modifier = Modifier.padding(bottom = 16.dp)
                 ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Thêm tài liệu",
-                        modifier = Modifier.graphicsLayer {
-                            rotationZ = if (isDocFabHovered) 90f else 0f
-                        }
-                    )
+                    Icon(Icons.Default.Add, contentDescription = "Add Document")
                 }
 
-                // Add folder FAB with animation
-                val folderFabScale = remember { Animatable(0.6f) }
-                LaunchedEffect(Unit) {
-                    delay(500) // Delay for staggered effect
-                    folderFabScale.animateTo(
-                        targetValue = 1f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    )
-                }
-
-                var isFolderFabHovered by remember { mutableStateOf(false) }
-                val folderHoverScale by animateFloatAsState(
-                    targetValue = if (isFolderFabHovered) 1.1f else 1f,
-                    animationSpec = tween(150),
-                    label = "Folder FAB Hover Scale"
-                )
-
+                // Add folder FAB
                 FloatingActionButton(
-                    onClick = { showCreateFolderDialog = true },
-                    modifier = Modifier
-                        .graphicsLayer {
-                            scaleX = folderFabScale.value * folderHoverScale
-                            scaleY = folderFabScale.value * folderHoverScale
-                        }
-                        .pointerInput(Unit) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    isFolderFabHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                                }
-                            }
-                        }
+                    onClick = { showCreateFolderDialog = true }
                 ) {
-                    Icon(
-                        Icons.Default.CreateNewFolder,
-                        contentDescription = "Tạo thư mục",
-                        modifier = Modifier.graphicsLayer {
-                            rotationZ = if (isFolderFabHovered) 10f else 0f
-                        }
-                    )
+                    Icon(Icons.Default.CreateNewFolder, contentDescription = "Create Folder")
                 }
             }
         }
@@ -346,7 +269,7 @@ fun DocumentsScreen(
                             viewModel.loadDocuments()
                         }
                     },
-                    label = { Text("Tìm kiếm tài liệu") },
+                    label = { Text("Search documents") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
@@ -385,10 +308,9 @@ fun DocumentsScreen(
             // Folders
             if (folderState.folders.isNotEmpty()) {
                 Text(
-                    text = "Thư mục",
+                    text = "Folders",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    color = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
 
                 LazyColumn(
@@ -416,10 +338,9 @@ fun DocumentsScreen(
 
             // Documents
             Text(
-                text = "Tài liệu",
+                text = "Documents",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp),
-                color = MaterialTheme.colorScheme.primary
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
             if (documentListState.documents.isEmpty() && !documentListState.isLoading) {
@@ -430,9 +351,8 @@ fun DocumentsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Không tìm thấy tài liệu nào",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "No documents found",
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
             } else {

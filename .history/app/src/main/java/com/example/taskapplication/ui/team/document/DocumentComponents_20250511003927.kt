@@ -368,28 +368,8 @@ fun DocumentItem(
             }
 
             Box {
-                // Menu button with animation
-                val menuButtonScale by animateFloatAsState(
-                    targetValue = if (isHovered) 1.1f else 1f,
-                    animationSpec = tween(durationMillis = 150),
-                    label = "Menu Button Scale Animation"
-                )
-
-                IconButton(
-                    onClick = { showMenu = true },
-                    modifier = Modifier.graphicsLayer {
-                        scaleX = menuButtonScale
-                        scaleY = menuButtonScale
-                    }
-                ) {
-                    Icon(
-                        Icons.Default.MoreVert,
-                        contentDescription = "Thêm tùy chọn",
-                        tint = if (isHovered)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "More")
                 }
 
                 DropdownMenu(
@@ -421,56 +401,20 @@ fun AccessLevelOption(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    // Hover state and animations
-    var isHovered by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isHovered) 1.05f else 1f,
-        animationSpec = tween(durationMillis = 150),
-        label = "Option Scale Animation"
-    )
-
-    // Background color based on state
-    val backgroundColor = when {
-        selected && isHovered -> MaterialTheme.colorScheme.primary
-        selected -> MaterialTheme.colorScheme.primaryContainer
-        isHovered -> MaterialTheme.colorScheme.surfaceVariant
-        else -> MaterialTheme.colorScheme.surface
-    }
-
-    // Text color based on state
-    val textColor = when {
-        selected && isHovered -> MaterialTheme.colorScheme.onPrimary
-        selected -> MaterialTheme.colorScheme.onPrimaryContainer
-        isHovered -> MaterialTheme.colorScheme.onSurfaceVariant
-        else -> MaterialTheme.colorScheme.onSurface
-    }
-
     Box(
         modifier = Modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
             .clickable(onClick = onClick)
             .background(
-                color = backgroundColor,
+                color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        isHovered = event.type == PointerEventType.Enter || event.type == PointerEventType.Move
-                    }
-                }
-            }
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (selected || isHovered) FontWeight.Bold else FontWeight.Normal,
-            color = textColor
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
         )
     }
 }

@@ -74,7 +74,6 @@ import com.example.taskapplication.domain.model.DocumentFolder
 import com.example.taskapplication.ui.animation.AnimationUtils
 import com.example.taskapplication.ui.components.ErrorText
 import com.example.taskapplication.ui.components.LoadingIndicator
-import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -346,7 +345,7 @@ fun DocumentsScreen(
                             viewModel.loadDocuments()
                         }
                     },
-                    label = { Text("Tìm kiếm tài liệu") },
+                    label = { Text("Search documents") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
