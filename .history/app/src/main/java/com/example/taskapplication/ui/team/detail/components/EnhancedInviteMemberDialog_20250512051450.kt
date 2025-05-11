@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,7 +26,6 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -63,15 +61,10 @@ import com.example.taskapplication.ui.team.detail.SearchState
 @Composable
 fun EnhancedInviteMemberDialog(
     inviteState: InviteState,
-    searchState: SearchState = SearchState.Idle,
-    searchResults: List<User> = emptyList(),
     onDismiss: () -> Unit,
-    onInvite: (email: String) -> Unit,
-    onSearch: (query: String) -> Unit = {},
-    onClearSearch: () -> Unit = {}
+    onInvite: (email: String) -> Unit
 ) {
     var email by remember { mutableStateOf("") }
-    var selectedUser by remember { mutableStateOf<User?>(null) }
 
     // Hiệu ứng rung khi có lỗi
     val shakeError = inviteState is InviteState.Error
@@ -150,44 +143,17 @@ fun EnhancedInviteMemberDialog(
                     }
                 }
 
-                // Email input with search functionality
+                // Email input
                 OutlinedTextField(
                     value = email,
-                    onValueChange = {
-                        email = it
-                        selectedUser = null
-                        onSearch(it)
-                    },
-                    label = { Text("Email Address or Name") },
+                    onValueChange = { email = it },
+                    label = { Text("Email Address") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Email,
                             contentDescription = "Email",
                             tint = MaterialTheme.colorScheme.primary
                         )
-                    },
-                    trailingIcon = {
-                        if (email.isNotEmpty()) {
-                            IconButton(
-                                onClick = {
-                                    email = ""
-                                    selectedUser = null
-                                    onClearSearch()
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Clear,
-                                    contentDescription = "Clear",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -202,73 +168,7 @@ fun EnhancedInviteMemberDialog(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Search results
-                AnimatedVisibility(
-                    visible = searchResults.isNotEmpty(),
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    Column {
-                        Text(
-                            text = "Search Results",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 200.dp)
-                        ) {
-                            items(searchResults) { user ->
-                                UserSearchItem(
-                                    user = user,
-                                    isSelected = selectedUser?.id == user.id,
-                                    onSelect = {
-                                        selectedUser = user
-                                        email = user.email
-                                    }
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-
-                // Search state
-                AnimatedVisibility(
-                    visible = searchState is SearchState.Loading || searchState is SearchState.Empty,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    when (searchState) {
-                        is SearchState.Loading -> {
-                            LinearProgressIndicator(
-                                modifier = Modifier.fillMaxWidth(),
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                        }
-                        is SearchState.Empty -> {
-                            if (email.isNotBlank()) {
-                                Text(
-                                    text = "No users found matching '$email'",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
-                        else -> { /* Do nothing */ }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Loading indicator
                 AnimatedVisibility(

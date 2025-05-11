@@ -348,14 +348,3 @@ sealed class RemoveMemberState {
     object Success : RemoveMemberState()
     data class Error(val message: String) : RemoveMemberState()
 }
-
-/**
- * State for search operation
- */
-sealed class SearchState {
-    object Idle : SearchState()
-    object Loading : SearchState()
-    object Success : SearchState()
-    object Empty : SearchState()
-    data class Error(val message: String) : SearchState()
-}

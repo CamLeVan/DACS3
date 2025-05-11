@@ -364,12 +364,8 @@ fun TeamDetailScreen(
     if (showInviteDialog) {
         EnhancedInviteMemberDialog(
             inviteState = inviteState,
-            searchState = searchState,
-            searchResults = searchResults,
             onDismiss = { viewModel.hideInviteDialog() },
-            onInvite = { email -> viewModel.inviteUserToTeam(email) },
-            onSearch = { query -> viewModel.searchUsers(query) },
-            onClearSearch = { viewModel.clearSearchResults() }
+            onInvite = { email -> viewModel.inviteUserToTeam(email) }
         )
     }
 }

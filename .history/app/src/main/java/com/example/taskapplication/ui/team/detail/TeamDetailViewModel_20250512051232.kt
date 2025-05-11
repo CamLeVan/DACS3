@@ -24,7 +24,6 @@ import javax.inject.Inject
 @HiltViewModel
 class TeamDetailViewModel @Inject constructor(
     private val teamRepository: TeamRepository,
-    private val userRepository: UserRepository,
     private val dataStoreManager: DataStoreManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -63,14 +62,6 @@ class TeamDetailViewModel @Inject constructor(
     // Is current user admin
     private val _isCurrentUserAdmin = MutableStateFlow(false)
     val isCurrentUserAdmin: StateFlow<Boolean> = _isCurrentUserAdmin
-
-    // Search results for users
-    private val _searchResults = MutableStateFlow<List<User>>(emptyList())
-    val searchResults: StateFlow<List<User>> = _searchResults
-
-    // Search state
-    private val _searchState = MutableStateFlow<SearchState>(SearchState.Idle)
-    val searchState: StateFlow<SearchState> = _searchState
 
     init {
         loadTeam()
@@ -257,46 +248,6 @@ class TeamDetailViewModel @Inject constructor(
         if (_removeMemberState.value is RemoveMemberState.Error) {
             _removeMemberState.value = RemoveMemberState.Idle
         }
-
-        if (_searchState.value is SearchState.Error) {
-            _searchState.value = SearchState.Idle
-        }
-    }
-
-    /**
-     * Tìm kiếm người dùng theo tên hoặc email
-     */
-    fun searchUsers(query: String) {
-        viewModelScope.launch {
-            if (query.isBlank()) {
-                _searchResults.value = emptyList()
-                _searchState.value = SearchState.Idle
-                return@launch
-            }
-
-            _searchState.value = SearchState.Loading
-
-            try {
-                val results = userRepository.searchUsers(query)
-                _searchResults.value = results
-                _searchState.value = if (results.isEmpty()) {
-                    SearchState.Empty
-                } else {
-                    SearchState.Success
-                }
-            } catch (e: Exception) {
-                _searchState.value = SearchState.Error(e.message ?: "Failed to search users")
-                _searchResults.value = emptyList()
-            }
-        }
-    }
-
-    /**
-     * Xóa kết quả tìm kiếm
-     */
-    fun clearSearchResults() {
-        _searchResults.value = emptyList()
-        _searchState.value = SearchState.Idle
     }
 }
 
@@ -347,15 +298,4 @@ sealed class RemoveMemberState {
     object Loading : RemoveMemberState()
     object Success : RemoveMemberState()
     data class Error(val message: String) : RemoveMemberState()
-}
-
-/**
- * State for search operation
- */
-sealed class SearchState {
-    object Idle : SearchState()
-    object Loading : SearchState()
-    object Success : SearchState()
-    object Empty : SearchState()
-    data class Error(val message: String) : SearchState()
 }
