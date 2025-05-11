@@ -68,28 +68,7 @@ fun TeamsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Nhóm") },
-                actions = {
-                    // Invitation button with badge
-                    IconButton(onClick = onViewInvitations) {
-                        BadgedBox(
-                            badge = {
-                                if (pendingInvitationsCount > 0) {
-                                    Badge {
-                                        Text(
-                                            text = if (pendingInvitationsCount > 9) "9+" else pendingInvitationsCount.toString()
-                                        )
-                                    }
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Email,
-                                contentDescription = "Lời mời"
-                            )
-                        }
-                    }
-                }
+                title = { Text("Nhóm") }
             )
         },
         floatingActionButton = {

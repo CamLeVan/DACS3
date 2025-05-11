@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.work.Configuration
-import com.example.taskapplication.R
 import com.example.taskapplication.workers.InvitationNotificationWorker
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -70,22 +69,11 @@ class TaskApplication : Application(), Configuration.Provider {
                 enableVibration(true)
             }
 
-            // Team Invitation Channel
-            val teamInvitationChannel = NotificationChannel(
-                CHANNEL_TEAM_INVITATION,
-                getString(R.string.invitation_channel_name),
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = getString(R.string.invitation_channel_description)
-                enableVibration(true)
-            }
-
             notificationManager.createNotificationChannels(
                 listOf(
                     taskReminderChannel,
                     teamMessageChannel,
-                    taskAssignmentChannel,
-                    teamInvitationChannel
+                    taskAssignmentChannel
                 )
             )
         }

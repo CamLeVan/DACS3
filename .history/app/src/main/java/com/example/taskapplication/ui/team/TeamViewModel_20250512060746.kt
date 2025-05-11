@@ -36,13 +36,8 @@ class TeamViewModel @Inject constructor(
     private val _createTeamState = MutableStateFlow<CreateTeamState>(CreateTeamState.Idle)
     val createTeamState: StateFlow<CreateTeamState> = _createTeamState
 
-    // Count of pending invitations
-    private val _pendingInvitationsCount = MutableStateFlow(0)
-    val pendingInvitationsCount: StateFlow<Int> = _pendingInvitationsCount
-
     init {
         loadTeams()
-        loadPendingInvitationsCount()
     }
 
     /**
@@ -123,28 +118,6 @@ class TeamViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _createTeamState.value = CreateTeamState.Error(e.message ?: "Failed to create team")
-            }
-        }
-    }
-
-    /**
-     * Load pending invitations count
-     */
-    private fun loadPendingInvitationsCount() {
-        viewModelScope.launch {
-            try {
-                teamInvitationRepository.getUserInvitations()
-                    .catch { e ->
-                        // Just log error, don't update UI state
-                        println("Error loading invitations: ${e.message}")
-                    }
-                    .collect { invitations ->
-                        val pendingCount = invitations.count { it.status == "pending" }
-                        _pendingInvitationsCount.value = pendingCount
-                    }
-            } catch (e: Exception) {
-                // Just log error, don't update UI state
-                println("Error loading invitations: ${e.message}")
             }
         }
     }

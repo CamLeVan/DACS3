@@ -20,9 +20,6 @@ class MainViewModel @Inject constructor(
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
-    private val _openInvitationsScreen = MutableStateFlow(false)
-    val openInvitationsScreen: StateFlow<Boolean> = _openInvitationsScreen.asStateFlow()
-
     init {
         checkLoginStatus()
     }
@@ -38,19 +35,5 @@ class MainViewModel @Inject constructor(
             logoutUseCase()
             _isLoggedIn.value = false
         }
-    }
-
-    /**
-     * Đặt trạng thái mở màn hình lời mời
-     */
-    fun setOpenInvitationsScreen(open: Boolean) {
-        _openInvitationsScreen.value = open
-    }
-
-    /**
-     * Đánh dấu đã xử lý lời mời
-     */
-    fun markInvitationsHandled() {
-        _openInvitationsScreen.value = false
     }
 }

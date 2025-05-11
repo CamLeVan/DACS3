@@ -24,17 +24,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Register notification channels
+        // Register notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationWorker.createNotificationChannel(this)
-            InvitationNotificationWorker.createNotificationChannel(this)
-        }
-
-        // Check for invitation notification intent
-        intent?.getBooleanExtra("OPEN_INVITATIONS", false)?.let { openInvitations ->
-            if (openInvitations) {
-                viewModel.setOpenInvitationsScreen(true)
-            }
         }
 
         setContent {

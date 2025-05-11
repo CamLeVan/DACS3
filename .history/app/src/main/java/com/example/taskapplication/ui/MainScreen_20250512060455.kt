@@ -34,7 +34,6 @@ import com.example.taskapplication.ui.personal.PersonalTasksScreen
 import com.example.taskapplication.ui.profile.ProfileScreen
 import com.example.taskapplication.ui.team.TeamDetailScreen
 import com.example.taskapplication.ui.team.TeamsScreen
-import com.example.taskapplication.ui.team.UserInvitationsScreen
 import com.example.taskapplication.ui.team.chat.ChatScreen
 import com.example.taskapplication.ui.team.detail.TeamRoleHistoryScreen
 import com.example.taskapplication.ui.team.document.DocumentsScreen
@@ -101,16 +100,7 @@ fun MainScreen(
                     TeamsScreen(
                         onTeamClick = { teamId ->
                             navController.navigate("teams/$teamId")
-                        },
-                        onViewInvitations = {
-                            navController.navigate("user_invitations")
                         }
-                    )
-                }
-
-                composable("user_invitations") {
-                    UserInvitationsScreen(
-                        onBackClick = { navController.popBackStack() }
                     )
                 }
 

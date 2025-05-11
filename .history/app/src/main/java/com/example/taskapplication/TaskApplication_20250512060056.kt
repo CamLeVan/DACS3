@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.work.Configuration
-import com.example.taskapplication.R
 import com.example.taskapplication.workers.InvitationNotificationWorker
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject

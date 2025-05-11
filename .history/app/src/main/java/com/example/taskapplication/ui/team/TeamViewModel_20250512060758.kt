@@ -42,7 +42,6 @@ class TeamViewModel @Inject constructor(
 
     init {
         loadTeams()
-        loadPendingInvitationsCount()
     }
 
     /**
@@ -123,28 +122,6 @@ class TeamViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _createTeamState.value = CreateTeamState.Error(e.message ?: "Failed to create team")
-            }
-        }
-    }
-
-    /**
-     * Load pending invitations count
-     */
-    private fun loadPendingInvitationsCount() {
-        viewModelScope.launch {
-            try {
-                teamInvitationRepository.getUserInvitations()
-                    .catch { e ->
-                        // Just log error, don't update UI state
-                        println("Error loading invitations: ${e.message}")
-                    }
-                    .collect { invitations ->
-                        val pendingCount = invitations.count { it.status == "pending" }
-                        _pendingInvitationsCount.value = pendingCount
-                    }
-            } catch (e: Exception) {
-                // Just log error, don't update UI state
-                println("Error loading invitations: ${e.message}")
             }
         }
     }

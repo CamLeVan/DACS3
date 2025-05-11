@@ -39,18 +39,4 @@ class MainViewModel @Inject constructor(
             _isLoggedIn.value = false
         }
     }
-
-    /**
-     * Đặt trạng thái mở màn hình lời mời
-     */
-    fun setOpenInvitationsScreen(open: Boolean) {
-        _openInvitationsScreen.value = open
-    }
-
-    /**
-     * Đánh dấu đã xử lý lời mời
-     */
-    fun markInvitationsHandled() {
-        _openInvitationsScreen.value = false
-    }
 }

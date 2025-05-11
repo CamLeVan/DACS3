@@ -46,13 +46,11 @@ import com.example.taskapplication.ui.team.components.TeamItem
 @Composable
 fun TeamsScreen(
     viewModel: TeamViewModel = hiltViewModel(),
-    onTeamClick: (String) -> Unit,
-    onViewInvitations: () -> Unit = {}
+    onTeamClick: (String) -> Unit
 ) {
     val teamsState by viewModel.teamsState.collectAsState()
     val showCreateTeamDialog by viewModel.showCreateTeamDialog.collectAsState()
     val createTeamState by viewModel.createTeamState.collectAsState()
-    val pendingInvitationsCount by viewModel.pendingInvitationsCount.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -68,28 +66,7 @@ fun TeamsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Nhóm") },
-                actions = {
-                    // Invitation button with badge
-                    IconButton(onClick = onViewInvitations) {
-                        BadgedBox(
-                            badge = {
-                                if (pendingInvitationsCount > 0) {
-                                    Badge {
-                                        Text(
-                                            text = if (pendingInvitationsCount > 9) "9+" else pendingInvitationsCount.toString()
-                                        )
-                                    }
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Email,
-                                contentDescription = "Lời mời"
-                            )
-                        }
-                    }
-                }
+                title = { Text("Nhóm") }
             )
         },
         floatingActionButton = {
