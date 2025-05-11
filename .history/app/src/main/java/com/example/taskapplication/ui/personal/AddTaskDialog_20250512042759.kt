@@ -151,7 +151,9 @@ fun AddTaskDialog(
                         unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
                         cursorColor = MaterialTheme.colorScheme.primary,
                         focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        focusedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
 
@@ -171,7 +173,9 @@ fun AddTaskDialog(
                         unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
                         cursorColor = MaterialTheme.colorScheme.primary,
                         focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        focusedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
 
@@ -336,7 +340,7 @@ fun AddTaskDialog(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Buttons với thiết kế hiện đại
+                // Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -346,13 +350,10 @@ fun AddTaskDialog(
                         text = stringResource(R.string.cancel),
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
-                        gradient = Brush.linearGradient(
-                            colors = listOf(
-                                Color.Gray.copy(alpha = 0.5f),
-                                Color.Gray.copy(alpha = 0.7f)
-                            )
-                        ),
-                        cornerRadius = RoundedCornerShape(16.dp)
+                        gradientColors = listOf(
+                            Color.Gray.copy(alpha = 0.5f),
+                            Color.Gray.copy(alpha = 0.7f)
+                        )
                     )
 
                     Spacer(modifier = Modifier.width(16.dp))
@@ -389,8 +390,7 @@ fun AddTaskDialog(
                             }
                         },
                         enabled = taskTitle.isNotEmpty(),
-                        modifier = Modifier.weight(1f),
-                        cornerRadius = RoundedCornerShape(16.dp)
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }

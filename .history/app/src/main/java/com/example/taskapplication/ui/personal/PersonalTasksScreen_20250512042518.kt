@@ -3,8 +3,6 @@ package com.example.taskapplication.ui.personal
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -152,42 +150,18 @@ fun PersonalTasksScreen(
             )
         },
         floatingActionButton = {
-            // FAB với thiết kế hiện đại
-            Box(
+            // FAB với gradient
+            FloatingActionButton(
+                onClick = { viewModel.showAddTaskDialog() },
                 modifier = Modifier
-                    .shadow(
-                        elevation = 6.dp,
-                        shape = CircleShape,
-                        spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                    )
+                    .shadow(8.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                ButtonGradientStart,
-                                ButtonGradientEnd
-                            )
-                        )
-                    )
-                    .border(
-                        width = 1.dp,
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.2f),
-                                Color.White.copy(alpha = 0.1f)
-                            )
-                        ),
-                        shape = CircleShape
-                    )
-                    .clickable { viewModel.showAddTaskDialog() }
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
+                    .background(fabGradient)
             ) {
                 Icon(
                     Icons.Default.Add,
                     contentDescription = stringResource(R.string.add_task),
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
+                    tint = Color.White
                 )
             }
         }

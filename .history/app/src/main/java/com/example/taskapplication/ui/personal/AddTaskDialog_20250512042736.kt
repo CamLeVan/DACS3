@@ -151,7 +151,9 @@ fun AddTaskDialog(
                         unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
                         cursorColor = MaterialTheme.colorScheme.primary,
                         focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        focusedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
 
@@ -171,7 +173,9 @@ fun AddTaskDialog(
                         unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
                         cursorColor = MaterialTheme.colorScheme.primary,
                         focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        focusedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
 
@@ -336,7 +340,7 @@ fun AddTaskDialog(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Buttons với thiết kế hiện đại
+                // Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -346,13 +350,10 @@ fun AddTaskDialog(
                         text = stringResource(R.string.cancel),
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
-                        gradient = Brush.linearGradient(
-                            colors = listOf(
-                                Color.Gray.copy(alpha = 0.5f),
-                                Color.Gray.copy(alpha = 0.7f)
-                            )
-                        ),
-                        cornerRadius = RoundedCornerShape(16.dp)
+                        gradientColors = listOf(
+                            Color.Gray.copy(alpha = 0.5f),
+                            Color.Gray.copy(alpha = 0.7f)
+                        )
                     )
 
                     Spacer(modifier = Modifier.width(16.dp))
@@ -389,8 +390,7 @@ fun AddTaskDialog(
                             }
                         },
                         enabled = taskTitle.isNotEmpty(),
-                        modifier = Modifier.weight(1f),
-                        cornerRadius = RoundedCornerShape(16.dp)
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
@@ -399,7 +399,7 @@ fun AddTaskDialog(
 }
 
 /**
- * Tùy chọn ưu tiên cho công việc với thiết kế hiện đại
+ * Tùy chọn ưu tiên cho công việc
  */
 @Composable
 private fun PriorityOption(
@@ -411,59 +411,37 @@ private fun PriorityOption(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(
-                if (isSelected) color.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
+                if (isSelected) color.copy(alpha = 0.15f) else Color.Transparent
             )
             .border(
                 width = 1.dp,
-                brush = if (isSelected)
-                    Brush.linearGradient(
-                        colors = listOf(
-                            color.copy(alpha = 0.7f),
-                            color.copy(alpha = 0.3f)
-                        )
-                    )
-                else
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color.Gray.copy(alpha = 0.3f),
-                            Color.Gray.copy(alpha = 0.1f)
-                        )
-                    ),
-                shape = RoundedCornerShape(12.dp)
+                color = if (isSelected) color else Color.Gray.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(8.dp)
             )
             .clickable { onClick() }
-            .padding(vertical = 12.dp, horizontal = 8.dp),
+            .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isSelected) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(color.copy(alpha = 0.2f))
-                        .padding(4.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
             }
 
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (isSelected) color else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
             )
         }
     }

@@ -138,26 +138,24 @@ fun AddTaskDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Title field với thiết kế hiện đại
+                // Title field
                 OutlinedTextField(
                     value = taskTitle,
                     onValueChange = { taskTitle = it },
                     label = { Text(stringResource(R.string.task_title)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                        cursorColor = MaterialTheme.colorScheme.primary
                     )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Description field với thiết kế hiện đại
+                // Description field
                 OutlinedTextField(
                     value = taskDescription,
                     onValueChange = { taskDescription = it },
@@ -165,13 +163,11 @@ fun AddTaskDialog(
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     maxLines = 5,
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                        cursorColor = MaterialTheme.colorScheme.primary
                     )
                 )
 
@@ -181,19 +177,11 @@ fun AddTaskDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(
-                            MaterialTheme.colorScheme.surface
-                        )
+                        .clip(RoundedCornerShape(12.dp))
                         .border(
                             width = 1.dp,
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                                )
-                            ),
-                            shape = RoundedCornerShape(16.dp)
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(12.dp)
                         )
                         .clickable { datePickerDialog.show() }
                         .padding(16.dp)
@@ -202,21 +190,11 @@ fun AddTaskDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Icon với background tròn
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
-                                .padding(8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DateRange,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
 
                         Spacer(modifier = Modifier.width(12.dp))
 
@@ -231,9 +209,7 @@ fun AddTaskDialog(
 
                             Text(
                                 text = taskDueDate?.let { formatDate(it) } ?: stringResource(R.string.select_date),
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Medium
-                                ),
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = if (taskDueDate == null)
                                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 else
@@ -249,52 +225,22 @@ fun AddTaskDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(
-                            MaterialTheme.colorScheme.surface
-                        )
+                        .clip(RoundedCornerShape(12.dp))
                         .border(
                             width = 1.dp,
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                                )
-                            ),
-                            shape = RoundedCornerShape(16.dp)
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(12.dp)
                         )
                         .padding(16.dp)
                 ) {
                     Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Icon với background tròn
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = null,
-                                    tint = priorityColor
-                                )
-                            }
+                        Text(
+                            text = stringResource(R.string.task_priority),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
 
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Text(
-                                text = stringResource(R.string.task_priority),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -336,7 +282,7 @@ fun AddTaskDialog(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Buttons với thiết kế hiện đại
+                // Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -346,13 +292,10 @@ fun AddTaskDialog(
                         text = stringResource(R.string.cancel),
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
-                        gradient = Brush.linearGradient(
-                            colors = listOf(
-                                Color.Gray.copy(alpha = 0.5f),
-                                Color.Gray.copy(alpha = 0.7f)
-                            )
-                        ),
-                        cornerRadius = RoundedCornerShape(16.dp)
+                        gradientColors = listOf(
+                            Color.Gray.copy(alpha = 0.5f),
+                            Color.Gray.copy(alpha = 0.7f)
+                        )
                     )
 
                     Spacer(modifier = Modifier.width(16.dp))
@@ -389,8 +332,7 @@ fun AddTaskDialog(
                             }
                         },
                         enabled = taskTitle.isNotEmpty(),
-                        modifier = Modifier.weight(1f),
-                        cornerRadius = RoundedCornerShape(16.dp)
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
@@ -399,7 +341,7 @@ fun AddTaskDialog(
 }
 
 /**
- * Tùy chọn ưu tiên cho công việc với thiết kế hiện đại
+ * Tùy chọn ưu tiên cho công việc
  */
 @Composable
 private fun PriorityOption(
@@ -411,59 +353,37 @@ private fun PriorityOption(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(
-                if (isSelected) color.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
+                if (isSelected) color.copy(alpha = 0.15f) else Color.Transparent
             )
             .border(
                 width = 1.dp,
-                brush = if (isSelected)
-                    Brush.linearGradient(
-                        colors = listOf(
-                            color.copy(alpha = 0.7f),
-                            color.copy(alpha = 0.3f)
-                        )
-                    )
-                else
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color.Gray.copy(alpha = 0.3f),
-                            Color.Gray.copy(alpha = 0.1f)
-                        )
-                    ),
-                shape = RoundedCornerShape(12.dp)
+                color = if (isSelected) color else Color.Gray.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(8.dp)
             )
             .clickable { onClick() }
-            .padding(vertical = 12.dp, horizontal = 8.dp),
+            .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isSelected) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(color.copy(alpha = 0.2f))
-                        .padding(4.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
             }
 
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (isSelected) color else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
             )
         }
     }
