@@ -10,5 +10,7 @@ data class PersonalTask(
     val serverId: Long? = null,
     val syncStatus: String = "synced",
     val lastModified: Long = System.currentTimeMillis(),
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val labels: List<String>? = null,
+    val reminderMinutesBefore: Int? = null
 ) 

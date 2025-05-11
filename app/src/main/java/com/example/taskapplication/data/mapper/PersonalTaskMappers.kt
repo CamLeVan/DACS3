@@ -18,7 +18,9 @@ fun PersonalTaskEntity.toDomainModel(): PersonalTask {
         serverId = serverId,
         syncStatus = syncStatus,
         lastModified = lastModified,
-        createdAt = createdAt
+        createdAt = createdAt,
+        labels = labels,
+        reminderMinutesBefore = reminderMinutesBefore
     )
 }
 
@@ -34,7 +36,9 @@ fun PersonalTask.toEntity(): PersonalTaskEntity {
         serverId = serverId,
         syncStatus = syncStatus,
         lastModified = lastModified,
-        createdAt = createdAt
+        createdAt = createdAt,
+        labels = labels,
+        reminderMinutesBefore = reminderMinutesBefore
     )
 }
 
@@ -50,7 +54,9 @@ fun PersonalTaskResponse.toEntity(existingTask: PersonalTaskEntity? = null): Per
         serverId = id,
         syncStatus = "synced",
         lastModified = updatedAt,
-        createdAt = existingTask?.createdAt ?: createdAt
+        createdAt = existingTask?.createdAt ?: createdAt,
+        labels = labels,
+        reminderMinutesBefore = reminderMinutesBefore
     )
 }
 

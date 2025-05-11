@@ -8,7 +8,9 @@ data class PersonalTaskResponse(
     val priority: Int,
     val isCompleted: Boolean,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val labels: List<String>? = null,
+    val reminderMinutesBefore: Int? = null
 )
 
 data class TeamTaskResponse(

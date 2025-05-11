@@ -14,5 +14,7 @@ data class PersonalTaskEntity(
     val serverId: Long?, // Null nếu chưa đồng bộ với server
     val syncStatus: String, // "synced", "pending_create", "pending_update", "pending_delete"
     val lastModified: Long,
-    val createdAt: Long
+    val createdAt: Long,
+    val labels: List<String>?, // Thêm trường labels
+    val reminderMinutesBefore: Int? // Thêm trường reminder
 ) 

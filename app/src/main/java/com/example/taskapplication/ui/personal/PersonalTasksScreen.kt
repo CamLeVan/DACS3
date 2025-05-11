@@ -7,23 +7,30 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +47,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -62,6 +70,10 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
 
 /**
  * Màn hình hiển thị danh sách công việc cá nhân với giao diện hiện đại
@@ -102,50 +114,65 @@ fun PersonalTasksScreen(
         derivedStateOf { listState.firstVisibleItemIndex > 5 }
     }
 
+    // Màu tím đậm chủ đạo
+    val deepPurple = Color(0xFF6A30CF)
+    // State filter
+    val filterOptions = listOf("Tất cả", "Quá hạn", "Đang chờ", "Hoàn thành")
+    var selectedFilter by remember { mutableStateOf(0) }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.personal_tasks),
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                actions = {
-                    // Nút đồng bộ với hiệu ứng
-                    IconButton(
-                        onClick = { viewModel.syncTasks() },
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .shadow(4.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .size(40.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = stringResource(R.string.sync),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
+            // Chỉ còn thanh tiêu đề
+            Box(
+    modifier = Modifier
+        .fillMaxWidth()
+        .background(deepPurple)
+        .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.List,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(32.dp)
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = stringResource(R.string.personal_tasks),
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            ),
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(
+            onClick = { viewModel.syncTasks() },
+            modifier = Modifier
+                .size(40.dp)
+                .background(Color.White.copy(alpha = 0.15f), CircleShape)
+        ) {
+            Icon(
+                Icons.Default.Refresh,
+                contentDescription = stringResource(R.string.sync),
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
             )
+        }
+    }
+}
         },
         floatingActionButton = {
-            // FAB với gradient
+            // FAB tím đậm
             FloatingActionButton(
                 onClick = { viewModel.showAddTaskDialog() },
-                modifier = Modifier
-                    .shadow(8.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(fabGradient)
+                containerColor = deepPurple,
+                contentColor = Color.White,
+                modifier = Modifier.shadow(8.dp, CircleShape)
             ) {
                 Icon(
                     Icons.Default.Add,
@@ -155,116 +182,142 @@ fun PersonalTasksScreen(
             }
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            SwipeRefresh(
-                state = rememberSwipeRefreshState(isRefreshing),
-                onRefresh = { viewModel.syncTasks() },
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            // Filter bar hiện đại
+            Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .shadow(2.dp)
+                    .horizontalScroll(rememberScrollState())
+                    .padding(vertical = 14.dp, horizontal = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                when (val state = tasksState) {
-                    is PersonalTasksViewModel.TasksState.Loading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                CircularProgressIndicator(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(48.dp)
-                                )
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                Text(
-                                    text = "Đang tải công việc...",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                )
-                            }
-                        }
-                    }
-                    is PersonalTasksViewModel.TasksState.Success -> {
-                        if (state.tasks.isEmpty()) {
-                            // Hiển thị trạng thái trống với animation
-                            EmptyStateView(
-                                message = stringResource(R.string.empty_tasks),
-                                icon = Icons.Default.Info
-                            )
-                        } else {
-                            // Hiển thị danh sách công việc với animation
-                            LazyColumn(
-                                state = listState,
-                                contentPadding = PaddingValues(bottom = 80.dp)
-                            ) {
-                                item {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                }
-
-                                items(
-                                    items = state.tasks,
-                                    key = { it.id }
-                                ) { task ->
-                                    TaskItem(
-                                        task = task,
-                                        onClick = { onTaskClick(task.id) },
-                                        onCompleteClick = { viewModel.toggleTaskCompletion(task) }
-                                    )
-                                }
-
-                                item {
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                }
-                            }
-                        }
-                    }
-                    is PersonalTasksViewModel.TasksState.Error -> {
-                        ErrorStateView(
-                            message = stringResource(R.string.error_loading_tasks, state.message),
-                            onRetryClick = { viewModel.loadTasks() }
+                filterOptions.forEachIndexed { idx, label ->
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(if (selectedFilter == idx) deepPurple else Color(0xFFF3F1F8))
+                            .padding(horizontal = 24.dp, vertical = 10.dp)
+                            .clickable { selectedFilter = idx },
+                    ) {
+                        Text(
+                            text = label,
+                            color = if (selectedFilter == idx) Color.White else Color(0xFF6A30CF),
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                         )
                     }
                 }
             }
-
-            // Nút cuộn lên đầu trang
-            AnimatedVisibility(
-                visible = showScrollToTop,
-                enter = fadeIn() + slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = tween(durationMillis = 300)
-                ),
-                exit = fadeOut() + slideOutVertically(
-                    targetOffsetY = { it },
-                    animationSpec = tween(durationMillis = 300)
-                ),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 100.dp)
-            ) {
-                FloatingActionButton(
-                    onClick = {
-                        // Cuộn lên đầu trang
-                        coroutineScope.launch {
-                            listState.animateScrollToItem(0)
-                        }
-                    },
+            androidx.compose.material.Divider(color = Color(0xFFF3F1F8), thickness = 2.dp)
+            Box(modifier = Modifier.fillMaxSize()) {
+                SwipeRefresh(
+                    state = rememberSwipeRefreshState(isRefreshing),
+                    onRefresh = { viewModel.syncTasks() },
                     modifier = Modifier
-                        .shadow(4.dp, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .fillMaxSize()
                 ) {
-                    Text(
-                        text = "Lên đầu trang",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                    )
+                    when (val state = tasksState) {
+                        is PersonalTasksViewModel.TasksState.Loading -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(48.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    Text(
+                                        text = "Đang tải công việc...",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
+                        }
+                        is PersonalTasksViewModel.TasksState.Success -> {
+                            if (state.tasks.isEmpty()) {
+                                // Hiển thị trạng thái trống với animation
+                                EmptyStateView(
+                                    message = stringResource(R.string.empty_tasks),
+                                    icon = Icons.Default.Info
+                                )
+                            } else {
+                                // Hiển thị danh sách công việc với animation
+                                LazyColumn(
+                                    state = listState,
+                                    contentPadding = PaddingValues(bottom = 80.dp)
+                                ) {
+                                    item {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+
+                                    items(
+                                        items = state.tasks,
+                                        key = { it.id }
+                                    ) { task ->
+                                        TaskItem(
+                                            task = task,
+                                            onClick = { onTaskClick(task.id) },
+                                            onCompleteClick = { viewModel.toggleTaskCompletion(task) }
+                                        )
+                                    }
+
+                                    item {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                    }
+                                }
+                            }
+                        }
+                        is PersonalTasksViewModel.TasksState.Error -> {
+                            ErrorStateView(
+                                message = stringResource(R.string.error_loading_tasks, state.message),
+                                onRetryClick = { viewModel.loadTasks() }
+                            )
+                        }
+                    }
+                }
+
+                // Nút cuộn lên đầu trang
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showScrollToTop,
+                    enter = fadeIn() + slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = tween(durationMillis = 300)
+                    ),
+                    exit = fadeOut() + slideOutVertically(
+                        targetOffsetY = { it },
+                        animationSpec = tween(durationMillis = 300)
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 100.dp)
+                ) {
+                    FloatingActionButton(
+                        onClick = {
+                            // Cuộn lên đầu trang
+                            coroutineScope.launch {
+                                listState.animateScrollToItem(0)
+                            }
+                        },
+                        modifier = Modifier
+                            .shadow(4.dp, RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                    ) {
+                        Text(
+                            text = "Lên đầu trang",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        )
+                    }
                 }
             }
         }

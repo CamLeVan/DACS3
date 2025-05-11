@@ -13,12 +13,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,6 +40,10 @@ import com.example.taskapplication.ui.theme.LowPriority
 import com.example.taskapplication.ui.theme.MediumPriority
 import com.example.taskapplication.util.formatDate
 import com.example.taskapplication.util.isOverdue
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.font.FontWeight
 
 /**
  * Component hiển thị một công việc cá nhân với giao diện hiện đại
@@ -59,7 +66,8 @@ fun TaskItem(
         else -> Color.Transparent
     }
 
-    val isTaskOverdue = task.dueDate?.let { isOverdue(it) } ?: false
+    // Sửa lại logic quá hạn: chỉ task chưa hoàn thành và đã qua hạn mới là quá hạn
+    val isTaskOverdue = !task.isCompleted && task.dueDate?.let { isOverdue(it) } == true
     val textColor = when {
         task.isCompleted -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         isTaskOverdue -> extendedColorScheme.taskOverdue
@@ -93,121 +101,113 @@ fun TaskItem(
         )
     }
 
-    GradientCard(
+    // Nền theo trạng thái
+    val backgroundColor = when {
+        task.isCompleted -> Color(0xFFE8F5E9) // xanh nhạt
+        isTaskOverdue -> Color(0xFFFFF3E0) // cam nhạt
+        else -> Color(0xFFF3F1F8) // tím nhạt
+    }
+    // Viền nhạt
+    val borderColor = when {
+        task.isCompleted -> Color(0xFFB2DFDB)
+        isTaskOverdue -> Color(0xFFFFCCBC)
+        else -> Color(0xFFE0E0E0)
+    }
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        onClick = onClick,
-        cornerRadius = 12.dp,
-        elevation = if (task.isCompleted) 1.dp else 3.dp,
-        gradient = cardGradient
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(18.dp),
+        shadowElevation = 0.dp,
+        border = BorderStroke(2.dp, borderColor),
+        color = backgroundColor
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            // Checkbox với màu tùy chỉnh
-            Checkbox(
-                checked = task.isCompleted,
-                onCheckedChange = { onCompleteClick() },
-                colors = CheckboxDefaults.colors(
-                    checkedColor = MaterialTheme.colorScheme.primary,
-                    uncheckedColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                )
+            // Icon trạng thái
+            Icon(
+                imageVector = if (task.isCompleted) Icons.Filled.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
+                contentDescription = null,
+                tint = if (task.isCompleted) Color(0xFF4CAF50) else Color(0xFF6A30CF),
+                modifier = Modifier.size(28.dp).clickable { onCompleteClick() }
             )
-
             Spacer(modifier = Modifier.width(12.dp))
-
             Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = task.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = textColor,
-                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = Color.Black,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-
-                    // Hiển thị biểu tượng ưu tiên nếu là ưu tiên cao
-                    if (task.priority == 2 && !task.isCompleted) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    // Chip trạng thái
+                    if (task.isCompleted) {
+                        ChipText(text = "Hoàn thành", color = Color(0xFF4CAF50), bg = Color(0xFFB2DFDB))
+                    } else if (isTaskOverdue) {
+                        ChipText(text = "Quá hạn", color = Color(0xFFF44336), bg = Color(0xFFFFCDD2))
+                    } else {
+                        ChipText(text = "Đang chờ", color = Color(0xFF1976D2), bg = Color(0xFFBBDEFB))
+                    }
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Chip độ ưu tiên
+                    when (task.priority) {
+                        2 -> ChipText(text = "Cao", color = Color(0xFFF44336), bg = Color(0xFFFFCDD2))
+                        1 -> ChipText(text = "Trung bình", color = Color(0xFFFFA000), bg = Color(0xFFFFECB3))
+                        else -> {}
+                    }
+                    if (task.dueDate != null) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
-                            imageVector = Icons.Default.Star,
+                            imageVector = Icons.Default.DateRange,
                             contentDescription = null,
-                            tint = HighPriority,
+                            tint = Color(0xFF757575),
                             modifier = Modifier.size(16.dp)
                         )
-                    }
-                }
-
-                task.description?.let { description ->
-                    if (description.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = description,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = textColor.copy(alpha = 0.7f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
+                            text = formatDate(task.dueDate),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF757575),
+                            modifier = Modifier.padding(start = 2.dp)
                         )
                     }
                 }
-
-                task.dueDate?.let { dueDate ->
+                if (!task.description.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Hiển thị ngày với màu sắc dựa trên trạng thái
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(
-                                    if (isTaskOverdue && !task.isCompleted)
-                                        extendedColorScheme.taskOverdue.copy(alpha = 0.1f)
-                                    else
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                                )
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Default.DateRange,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp),
-                                    tint = if (isTaskOverdue && !task.isCompleted)
-                                        extendedColorScheme.taskOverdue
-                                    else
-                                        MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = formatDate(dueDate),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (isTaskOverdue && !task.isCompleted)
-                                        extendedColorScheme.taskOverdue
-                                    else
-                                        MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
+                    Text(
+                        text = task.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF616161),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
-
-            // Sync status indicator với hiệu ứng đẹp hơn
-            if (task.syncStatus != "synced") {
-                Box(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(syncStatusColor)
-                )
-            }
         }
+    }
+}
+
+@Composable
+private fun ChipText(text: String, color: Color, bg: Color) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(bg)
+            .padding(horizontal = 8.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = text,
+            color = color,
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
+        )
     }
 }

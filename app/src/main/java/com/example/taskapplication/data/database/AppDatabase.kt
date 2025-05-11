@@ -4,8 +4,10 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.example.taskapplication.data.database.dao.*
 import com.example.taskapplication.data.database.entities.*
+import com.example.taskapplication.data.database.StringListConverter
 
 @Database(
     entities = [
@@ -19,9 +21,10 @@ import com.example.taskapplication.data.database.entities.*
         MessageReactionEntity::class,
         SyncMetadataEntity::class
     ],
-    version = 3,
+    version = 5,
     exportSchema = false
 )
+@TypeConverters(StringListConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun personalTaskDao(): PersonalTaskDao

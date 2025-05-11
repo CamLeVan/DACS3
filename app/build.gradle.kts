@@ -101,6 +101,8 @@ dependencies {
     implementation("com.google.accompanist:accompanist-pager:0.32.0")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.32.0")
     implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")
+    implementation ("androidx.compose.material:material-icons-extended:1.6.1")
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

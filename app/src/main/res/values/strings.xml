@@ -64,4 +64,19 @@
     <string name="sync_status">Trạng thái đồng bộ</string>
     <string name="synced">Đã đồng bộ</string>
     <string name="pending">Đang chờ</string>
+    <string name="task_labels">Nhãn</string>
+    <string name="add_label">Thêm nhãn</string>
+    <string name="remove_label">Xóa nhãn</string>
+    <string name="task_reminder">Nhắc nhở</string>
+    <string name="reminder_none">Không nhắc</string>
+    <string name="reminder_5min">5 phút trước hạn</string>
+    <string name="reminder_10min">10 phút trước hạn</string>
+    <string name="reminder_30min">30 phút trước hạn</string>
+    <string name="reminder_1hour">1 giờ trước hạn</string>
+    <string name="reminder_1day">1 ngày trước hạn</string>
+    <string name="reminder_custom">Tùy chọn</string>
+    <string name="reminder_custom_label">Nhập số phút trước hạn</string>
+    <string name="confirm_save_title">Xác nhận lưu công việc</string>
+    <string name="confirm_save_message">Bạn có chắc chắn muốn lưu công việc này không?</string>
+    <string name="confirm">Xác nhận</string>
 </resources>
