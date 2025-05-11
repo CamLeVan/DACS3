@@ -13,8 +13,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -459,7 +457,7 @@ fun MessageItem(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start
+        horizontalArrangement = if (isCurrentUser) Alignment.End else Alignment.Start
     ) {
         if (!isCurrentUser) {
             // Avatar placeholder (only for other users)
@@ -501,7 +499,7 @@ fun MessageItem(
             // Message content with time
             Row(
                 verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start,
+                horizontalArrangement = if (isCurrentUser) Alignment.End else Alignment.Start,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (isCurrentUser) {
@@ -588,151 +586,35 @@ fun MessageInput(
     isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
-    var showEmojiPicker by remember { mutableStateOf(false) }
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = { Text("Type a message") },
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(24.dp)
+        )
 
-    Column(modifier = modifier) {
-        // Emoji picker (simplified version)
-        AnimatedVisibility(
-            visible = showEmojiPicker,
-            enter = expandVertically() + fadeIn(),
-            exit = fadeOut()
+        Spacer(modifier = Modifier.width(8.dp))
+
+        IconButton(
+            onClick = onSendClick,
+            enabled = value.isNotBlank() && !isLoading
         ) {
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                tonalElevation = 2.dp,
-                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "Emoji Picker",
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.padding(8.dp)
-                    )
-
-                    Divider(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-
-                    // Simple emoji grid (would be replaced with a proper emoji picker in a real app)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        val emojis = listOf("😊", "👍", "❤️", "😂", "🎉", "👏", "🔥", "✅")
-                        emojis.forEach { emoji ->
-                            Text(
-                                text = emoji,
-                                fontSize = 24.sp,
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        onValueChange(value + emoji)
-                                        showEmojiPicker = false
-                                    }
-                                    .padding(8.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Input row
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // Attachment button
-            IconButton(
-                onClick = { /* TODO: Implement attachment picker */ },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Image,
-                    contentDescription = "Add attachment",
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp
                 )
-            }
-
-            // Emoji button
-            IconButton(
-                onClick = { showEmojiPicker = !showEmojiPicker },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.EmojiEmotions,
-                    contentDescription = "Add emoji",
-                    tint = if (showEmojiPicker)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                )
-            }
-
-            // Text field
-            TextField(
-                value = value,
-                onValueChange = onValueChange,
-                placeholder = {
-                    Text(
-                        "Type a message",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(24.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    disabledContainerColor = MaterialTheme.colorScheme.surface,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ),
-                maxLines = 4
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Send button with animation
-            val sendButtonColor = if (value.isBlank()) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
             } else {
-                MaterialTheme.colorScheme.primary
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(sendButtonColor)
-                    .clickable(enabled = value.isNotBlank() && !isLoading) {
-                        onSendClick()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Send,
-                        contentDescription = "Send Message",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Send,
+                    contentDescription = "Send Message",
+                    tint = if (value.isBlank()) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

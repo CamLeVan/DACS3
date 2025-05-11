@@ -595,7 +595,7 @@ fun MessageInput(
         AnimatedVisibility(
             visible = showEmojiPicker,
             enter = expandVertically() + fadeIn(),
-            exit = fadeOut()
+            exit = fadeOut() + scaleIn(initialScale = 0.8f)
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant,
@@ -625,7 +625,7 @@ fun MessageInput(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Alignment.SpaceEvenly
                     ) {
                         val emojis = listOf("😊", "👍", "❤️", "😂", "🎉", "👏", "🔥", "✅")
                         emojis.forEach { emoji ->

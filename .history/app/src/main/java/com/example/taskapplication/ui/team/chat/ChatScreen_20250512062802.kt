@@ -459,7 +459,7 @@ fun MessageItem(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start
+        horizontalArrangement = if (isCurrentUser) Alignment.End else Alignment.Start
     ) {
         if (!isCurrentUser) {
             // Avatar placeholder (only for other users)
@@ -501,7 +501,7 @@ fun MessageItem(
             // Message content with time
             Row(
                 verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start,
+                horizontalArrangement = if (isCurrentUser) Alignment.End else Alignment.Start,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (isCurrentUser) {
@@ -595,7 +595,7 @@ fun MessageInput(
         AnimatedVisibility(
             visible = showEmojiPicker,
             enter = expandVertically() + fadeIn(),
-            exit = fadeOut()
+            exit = fadeOut() + scaleIn(initialScale = 0.8f)
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant,
@@ -625,7 +625,7 @@ fun MessageInput(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Alignment.SpaceEvenly
                     ) {
                         val emojis = listOf("😊", "👍", "❤️", "😂", "🎉", "👏", "🔥", "✅")
                         emojis.forEach { emoji ->

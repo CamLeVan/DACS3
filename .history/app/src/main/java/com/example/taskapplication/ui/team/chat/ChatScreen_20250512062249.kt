@@ -13,8 +13,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -418,163 +416,100 @@ fun ChatScreen(
 @Composable
 fun MessageItem(
     message: Message,
-    isCurrentUser: Boolean,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dateFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
     val formattedTime = dateFormatter.format(Date(message.timestamp))
 
-    // Different colors for current user vs others
-    val bubbleColor = if (isCurrentUser) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
-
-    val textColor = if (isCurrentUser) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    // Different bubble shapes for current user vs others
-    val bubbleShape = if (isCurrentUser) {
-        RoundedCornerShape(16.dp, 4.dp, 16.dp, 16.dp)
-    } else {
-        RoundedCornerShape(4.dp, 16.dp, 16.dp, 16.dp)
-    }
-
-    // Scale animation for hover effect
-    var isHovered by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isHovered) 1.02f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "Message Scale Animation"
-    )
-
     Row(
         modifier = modifier,
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start
+        verticalAlignment = Alignment.Bottom
     ) {
-        if (!isCurrentUser) {
-            // Avatar placeholder (only for other users)
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = (message.senderName?.take(1) ?: message.senderId.take(1)).uppercase(),
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
+        // Avatar placeholder
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = message.senderId.take(1).uppercase(),
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold
+            )
         }
 
-        Column(
-            horizontalAlignment = if (isCurrentUser) Alignment.End else Alignment.Start,
-            modifier = Modifier.weight(1f, fill = false)
-        ) {
-            if (!isCurrentUser) {
-                // Sender name (only for other users)
-                Text(
-                    text = message.senderName ?: message.senderId,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+        Spacer(modifier = Modifier.width(8.dp))
 
-                Spacer(modifier = Modifier.height(2.dp))
-            }
+        Column {
+            // Sender name
+            Text(
+                text = message.senderName ?: message.senderId,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
-            // Message content with time
+            Spacer(modifier = Modifier.height(2.dp))
+
+            // Message content
             Row(
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start,
-                modifier = Modifier.fillMaxWidth()
+                verticalAlignment = Alignment.Bottom
             ) {
-                if (isCurrentUser) {
-                    // Time for current user (left side)
-                    Text(
-                        text = formattedTime,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        modifier = Modifier.padding(end = 4.dp, bottom = 4.dp)
-                    )
-                }
-
-                // Message bubble
                 Card(
-                    shape = bubbleShape,
-                    colors = CardDefaults.cardColors(containerColor = bubbleColor),
-                    modifier = Modifier
-                        .widthIn(max = 280.dp)
-                        .graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                        }
-                        .shadow(
-                            elevation = 1.dp,
-                            shape = bubbleShape,
-                            clip = true
-                        )
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    modifier = Modifier.weight(1f, fill = false)
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp)
+                        modifier = Modifier.padding(8.dp)
                     ) {
                         if (message.isDeleted) {
                             Text(
                                 text = "This message has been deleted",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = textColor.copy(alpha = 0.7f),
-                                fontStyle = FontStyle.Italic
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                             )
                         } else {
                             Text(
                                 text = message.content,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = textColor
+                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
                     }
                 }
 
-                if (!isCurrentUser) {
-                    // Time for other users (right side)
+                Spacer(modifier = Modifier.width(4.dp))
+
+                // Time and delete button
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = formattedTime,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
+
+                    if (!message.isDeleted) {
+                        IconButton(
+                            onClick = onDeleteClick,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Message",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
                 }
-            }
-
-            // Delete option (only for current user)
-            if (isCurrentUser && !message.isDeleted) {
-                Spacer(modifier = Modifier.height(2.dp))
-
-                Text(
-                    text = "Delete",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable { onDeleteClick() }
-                        .padding(4.dp)
-                )
             }
         }
     }
@@ -588,151 +523,35 @@ fun MessageInput(
     isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
-    var showEmojiPicker by remember { mutableStateOf(false) }
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = { Text("Type a message") },
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(24.dp)
+        )
 
-    Column(modifier = modifier) {
-        // Emoji picker (simplified version)
-        AnimatedVisibility(
-            visible = showEmojiPicker,
-            enter = expandVertically() + fadeIn(),
-            exit = fadeOut()
+        Spacer(modifier = Modifier.width(8.dp))
+
+        IconButton(
+            onClick = onSendClick,
+            enabled = value.isNotBlank() && !isLoading
         ) {
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                tonalElevation = 2.dp,
-                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "Emoji Picker",
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.padding(8.dp)
-                    )
-
-                    Divider(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-
-                    // Simple emoji grid (would be replaced with a proper emoji picker in a real app)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        val emojis = listOf("😊", "👍", "❤️", "😂", "🎉", "👏", "🔥", "✅")
-                        emojis.forEach { emoji ->
-                            Text(
-                                text = emoji,
-                                fontSize = 24.sp,
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        onValueChange(value + emoji)
-                                        showEmojiPicker = false
-                                    }
-                                    .padding(8.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Input row
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // Attachment button
-            IconButton(
-                onClick = { /* TODO: Implement attachment picker */ },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Image,
-                    contentDescription = "Add attachment",
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp
                 )
-            }
-
-            // Emoji button
-            IconButton(
-                onClick = { showEmojiPicker = !showEmojiPicker },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.EmojiEmotions,
-                    contentDescription = "Add emoji",
-                    tint = if (showEmojiPicker)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                )
-            }
-
-            // Text field
-            TextField(
-                value = value,
-                onValueChange = onValueChange,
-                placeholder = {
-                    Text(
-                        "Type a message",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(24.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    disabledContainerColor = MaterialTheme.colorScheme.surface,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ),
-                maxLines = 4
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Send button with animation
-            val sendButtonColor = if (value.isBlank()) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
             } else {
-                MaterialTheme.colorScheme.primary
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(sendButtonColor)
-                    .clickable(enabled = value.isNotBlank() && !isLoading) {
-                        onSendClick()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Send,
-                        contentDescription = "Send Message",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Send,
+                    contentDescription = "Send Message",
+                    tint = if (value.isBlank()) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

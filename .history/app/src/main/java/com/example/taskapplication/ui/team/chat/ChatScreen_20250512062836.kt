@@ -625,7 +625,7 @@ fun MessageInput(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Alignment.SpaceEvenly
                     ) {
                         val emojis = listOf("😊", "👍", "❤️", "😂", "🎉", "👏", "🔥", "✅")
                         emojis.forEach { emoji ->
