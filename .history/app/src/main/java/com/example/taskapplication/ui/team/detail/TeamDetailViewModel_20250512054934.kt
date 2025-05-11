@@ -83,25 +83,12 @@ class TeamDetailViewModel @Inject constructor(
     private val _suggestedUsersState = MutableStateFlow<SuggestedUsersState>(SuggestedUsersState.Loading)
     val suggestedUsersState: StateFlow<SuggestedUsersState> = _suggestedUsersState
 
-    // Pending invitations
-    private val _pendingInvitations = MutableStateFlow<List<TeamInvitation>>(emptyList())
-    val pendingInvitations: StateFlow<List<TeamInvitation>> = _pendingInvitations
-
-    // Invitations state
-    private val _invitationsState = MutableStateFlow<InvitationsState>(InvitationsState.Loading)
-    val invitationsState: StateFlow<InvitationsState> = _invitationsState
-
-    // Resend invitation state
-    private val _resendInvitationState = MutableStateFlow<ResendInvitationState>(ResendInvitationState.Idle)
-    val resendInvitationState: StateFlow<ResendInvitationState> = _resendInvitationState
-
     init {
         loadTeam()
         loadTeamMembers()
         loadCurrentUser()
         checkCurrentUserAdmin()
         loadSuggestedUsers()
-        loadPendingInvitations()
     }
 
     /**
@@ -353,86 +340,6 @@ class TeamDetailViewModel @Inject constructor(
     fun refreshSuggestedUsers() {
         loadSuggestedUsers()
     }
-
-    /**
-     * Tải danh sách lời mời đang chờ
-     */
-    private fun loadPendingInvitations() {
-        viewModelScope.launch {
-            _invitationsState.value = InvitationsState.Loading
-
-            try {
-                teamInvitationRepository.getTeamInvitationsByStatus(teamId, "pending")
-                    .catch { e ->
-                        _invitationsState.value = InvitationsState.Error(e.message ?: "Failed to load invitations")
-                        _pendingInvitations.value = emptyList()
-                    }
-                    .collect { invitations ->
-                        _pendingInvitations.value = invitations
-                        _invitationsState.value = if (invitations.isEmpty()) {
-                            InvitationsState.Empty
-                        } else {
-                            InvitationsState.Success
-                        }
-                    }
-            } catch (e: Exception) {
-                _invitationsState.value = InvitationsState.Error(e.message ?: "Failed to load invitations")
-                _pendingInvitations.value = emptyList()
-            }
-        }
-    }
-
-    /**
-     * Làm mới danh sách lời mời
-     */
-    fun refreshInvitations() {
-        loadPendingInvitations()
-    }
-
-    /**
-     * Gửi lại lời mời
-     */
-    fun resendInvitation(invitationId: String) {
-        viewModelScope.launch {
-            _resendInvitationState.value = ResendInvitationState.Loading
-
-            try {
-                teamInvitationRepository.resendInvitation(invitationId)
-                    .onSuccess {
-                        _resendInvitationState.value = ResendInvitationState.Success
-                        loadPendingInvitations() // Refresh invitations list
-                    }
-                    .onFailure { e ->
-                        _resendInvitationState.value = ResendInvitationState.Error(e.message ?: "Failed to resend invitation")
-                    }
-            } catch (e: Exception) {
-                _resendInvitationState.value = ResendInvitationState.Error(e.message ?: "Failed to resend invitation")
-            }
-        }
-    }
-
-    /**
-     * Hủy lời mời
-     */
-    fun cancelInvitation(invitationId: String) {
-        viewModelScope.launch {
-            try {
-                teamInvitationRepository.updateInvitationStatus(invitationId, "cancelled")
-                    .onSuccess {
-                        loadPendingInvitations() // Refresh invitations list
-                    }
-            } catch (e: Exception) {
-                // Handle error if needed
-            }
-        }
-    }
-
-    /**
-     * Reset resend invitation state
-     */
-    fun resetResendInvitationState() {
-        _resendInvitationState.value = ResendInvitationState.Idle
-    }
 }
 
 /**
@@ -503,24 +410,4 @@ sealed class SuggestedUsersState {
     object Success : SuggestedUsersState()
     object Empty : SuggestedUsersState()
     data class Error(val message: String) : SuggestedUsersState()
-}
-
-/**
- * State for invitations
- */
-sealed class InvitationsState {
-    object Loading : InvitationsState()
-    object Success : InvitationsState()
-    object Empty : InvitationsState()
-    data class Error(val message: String) : InvitationsState()
-}
-
-/**
- * State for resend invitation operation
- */
-sealed class ResendInvitationState {
-    object Idle : ResendInvitationState()
-    object Loading : ResendInvitationState()
-    object Success : ResendInvitationState()
-    data class Error(val message: String) : ResendInvitationState()
 }

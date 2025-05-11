@@ -504,23 +504,3 @@ sealed class SuggestedUsersState {
     object Empty : SuggestedUsersState()
     data class Error(val message: String) : SuggestedUsersState()
 }
-
-/**
- * State for invitations
- */
-sealed class InvitationsState {
-    object Loading : InvitationsState()
-    object Success : InvitationsState()
-    object Empty : InvitationsState()
-    data class Error(val message: String) : InvitationsState()
-}
-
-/**
- * State for resend invitation operation
- */
-sealed class ResendInvitationState {
-    object Idle : ResendInvitationState()
-    object Loading : ResendInvitationState()
-    object Success : ResendInvitationState()
-    data class Error(val message: String) : ResendInvitationState()
-}

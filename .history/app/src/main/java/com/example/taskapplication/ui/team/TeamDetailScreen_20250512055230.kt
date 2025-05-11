@@ -340,23 +340,6 @@ fun TeamDetailScreen(
                                 }
                             }
                         }
-
-                        // Pending invitations section
-                        if (isCurrentUserAdmin) {
-                            item {
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                InvitationsList(
-                                    invitations = pendingInvitations,
-                                    invitationsState = invitationsState,
-                                    resendInvitationState = resendInvitationState,
-                                    onResend = { invitationId -> viewModel.resendInvitation(invitationId) },
-                                    onCancel = { invitationId -> viewModel.cancelInvitation(invitationId) },
-                                    onRefresh = { viewModel.refreshInvitations() },
-                                    onResetResendState = { viewModel.resetResendInvitationState() }
-                                )
-                            }
-                        }
                     }
                 }
 

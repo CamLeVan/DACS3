@@ -82,9 +82,6 @@ fun TeamDetailScreen(
     val searchState by viewModel.searchState.collectAsState()
     val suggestedUsers by viewModel.suggestedUsers.collectAsState()
     val suggestedUsersState by viewModel.suggestedUsersState.collectAsState()
-    val pendingInvitations by viewModel.pendingInvitations.collectAsState()
-    val invitationsState by viewModel.invitationsState.collectAsState()
-    val resendInvitationState by viewModel.resendInvitationState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -338,23 +335,6 @@ fun TeamDetailScreen(
                                         }
                                     }
                                 }
-                            }
-                        }
-
-                        // Pending invitations section
-                        if (isCurrentUserAdmin) {
-                            item {
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                InvitationsList(
-                                    invitations = pendingInvitations,
-                                    invitationsState = invitationsState,
-                                    resendInvitationState = resendInvitationState,
-                                    onResend = { invitationId -> viewModel.resendInvitation(invitationId) },
-                                    onCancel = { invitationId -> viewModel.cancelInvitation(invitationId) },
-                                    onRefresh = { viewModel.refreshInvitations() },
-                                    onResetResendState = { viewModel.resetResendInvitationState() }
-                                )
                             }
                         }
                     }
