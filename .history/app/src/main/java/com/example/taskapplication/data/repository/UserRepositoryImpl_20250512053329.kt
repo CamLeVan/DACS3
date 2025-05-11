@@ -21,6 +21,8 @@ import javax.inject.Singleton
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
+    private val userInteractionDao: UserInteractionDao,
+    private val appSettingsDao: AppSettingsDao,
     private val apiService: ApiService,
     private val dataStoreManager: DataStoreManager,
     private val connectionChecker: ConnectionChecker
@@ -269,10 +271,10 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getRecentCollaborators(limit: Int): List<User> {
+    override suspend fun getRecentCollaborators(teamId: String, limit: Int): List<User> {
         try {
             // Lấy danh sách người dùng đã từng làm việc cùng
-            val collaborators = userDao.getRecentCollaborators(limit).map { it.toDomainModel() }
+            val collaborators = userDao.getRecentCollaborators(teamId, limit).map { it.toDomainModel() }
 
             // Nếu không đủ số lượng, bổ sung bằng người dùng phổ biến
             if (collaborators.size < limit) {

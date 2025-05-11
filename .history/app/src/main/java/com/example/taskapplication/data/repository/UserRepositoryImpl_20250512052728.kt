@@ -21,6 +21,8 @@ import javax.inject.Singleton
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
+    private val userInteractionDao: UserInteractionDao,
+    private val appSettingsDao: AppSettingsDao,
     private val apiService: ApiService,
     private val dataStoreManager: DataStoreManager,
     private val connectionChecker: ConnectionChecker
@@ -255,36 +257,6 @@ class UserRepositoryImpl @Inject constructor(
             return localResults
         } catch (e: Exception) {
             Log.e(TAG, "Error searching users", e)
-            return emptyList()
-        }
-    }
-
-    override suspend fun getFrequentUsers(limit: Int): List<User> {
-        try {
-            // Lấy danh sách người dùng phổ biến
-            return userDao.getFrequentUsers(limit).map { it.toDomainModel() }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting frequent users", e)
-            return emptyList()
-        }
-    }
-
-    override suspend fun getRecentCollaborators(limit: Int): List<User> {
-        try {
-            // Lấy danh sách người dùng đã từng làm việc cùng
-            val collaborators = userDao.getRecentCollaborators(limit).map { it.toDomainModel() }
-
-            // Nếu không đủ số lượng, bổ sung bằng người dùng phổ biến
-            if (collaborators.size < limit) {
-                val frequentUsers = getFrequentUsers(limit - collaborators.size)
-                    .filter { user -> !collaborators.any { it.id == user.id } }
-
-                return collaborators + frequentUsers
-            }
-
-            return collaborators
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting recent collaborators", e)
             return emptyList()
         }
     }

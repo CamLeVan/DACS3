@@ -64,8 +64,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun documentDao(): DocumentDao
     abstract fun documentVersionDao(): DocumentVersionDao
     abstract fun documentPermissionDao(): DocumentPermissionDao
-    abstract fun userInteractionDao(): UserInteractionDao
-    abstract fun appSettingsDao(): AppSettingsDao
 
     companion object {
         // Migration from version 1 to version 2
@@ -269,41 +267,6 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_team_documents_teamId` ON `team_documents` (`teamId`)")
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_team_documents_uploadedBy` ON `team_documents` (`uploadedBy`)")
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_team_documents_folderId` ON `team_documents` (`folderId`)")
-            }
-        }
-
-        // Migration from version 5 to version 6
-        val MIGRATION_5_6 = object : Migration(5, 6) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                // Create user_interactions table
-                database.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS `user_interactions` (
-                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        `user_id` TEXT NOT NULL,
-                        `interaction_type` TEXT NOT NULL,
-                        `interaction_count` INTEGER NOT NULL DEFAULT 1,
-                        `last_interaction_timestamp` INTEGER NOT NULL,
-                        FOREIGN KEY(`user_id`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
-                    )
-                    """
-                )
-
-                // Create app_settings table
-                database.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS `app_settings` (
-                        `id` INTEGER PRIMARY KEY NOT NULL DEFAULT 1,
-                        `current_user_id` TEXT,
-                        `theme_mode` TEXT NOT NULL DEFAULT 'system',
-                        `notification_enabled` INTEGER NOT NULL DEFAULT 1,
-                        `last_sync_timestamp` INTEGER NOT NULL DEFAULT 0
-                    )
-                    """
-                )
-
-                // Create indices for better query performance
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_user_interactions_user_id` ON `user_interactions` (`user_id`)")
             }
         }
     }

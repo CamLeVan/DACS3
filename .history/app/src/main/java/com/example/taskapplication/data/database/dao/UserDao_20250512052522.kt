@@ -43,16 +43,20 @@ interface UserDao {
      * @param limit Số lượng người dùng tối đa cần lấy
      * @return Danh sách người dùng phổ biến
      */
-    @Query("SELECT * FROM users LIMIT :limit")
+    @Query("SELECT u.* FROM users u JOIN user_interactions i ON u.id = i.user_id GROUP BY u.id ORDER BY SUM(i.interaction_count) DESC LIMIT :limit")
     suspend fun getFrequentUsers(limit: Int): List<UserEntity>
 
     /**
      * Lấy danh sách người dùng đã từng làm việc cùng trong các team
+     * @param teamId ID của team hiện tại (để loại trừ những người đã trong team)
      * @param limit Số lượng người dùng tối đa cần lấy
      * @return Danh sách người dùng đã từng làm việc cùng
      */
-    @Query("SELECT * FROM users LIMIT :limit")
-    suspend fun getRecentCollaborators(limit: Int): List<UserEntity>
+    @Query("SELECT u.* FROM users u JOIN team_members tm1 ON u.id = tm1.user_id " +
+           "WHERE tm1.team_id IN (SELECT tm2.team_id FROM team_members tm2 WHERE tm2.user_id = (SELECT current_user_id FROM app_settings LIMIT 1)) " +
+           "AND u.id NOT IN (SELECT tm3.user_id FROM team_members tm3 WHERE tm3.team_id = :teamId) " +
+           "GROUP BY u.id ORDER BY COUNT(tm1.team_id) DESC LIMIT :limit")
+    suspend fun getRecentCollaborators(teamId: String, limit: Int): List<UserEntity>
 
     // Add specific queries as needed
 }

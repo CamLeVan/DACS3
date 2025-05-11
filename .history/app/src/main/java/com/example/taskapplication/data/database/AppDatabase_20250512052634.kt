@@ -64,8 +64,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun documentDao(): DocumentDao
     abstract fun documentVersionDao(): DocumentVersionDao
     abstract fun documentPermissionDao(): DocumentPermissionDao
-    abstract fun userInteractionDao(): UserInteractionDao
-    abstract fun appSettingsDao(): AppSettingsDao
 
     companion object {
         // Migration from version 1 to version 2

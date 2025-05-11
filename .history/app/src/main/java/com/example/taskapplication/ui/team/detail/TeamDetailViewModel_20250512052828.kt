@@ -307,36 +307,6 @@ class TeamDetailViewModel @Inject constructor(
         _searchResults.value = emptyList()
         _searchState.value = SearchState.Idle
     }
-
-    /**
-     * Tải danh sách người dùng được gợi ý (người dùng thường xuyên tương tác)
-     */
-    private fun loadSuggestedUsers() {
-        viewModelScope.launch {
-            _suggestedUsersState.value = SuggestedUsersState.Loading
-
-            try {
-                val users = userRepository.getRecentCollaborators(5)
-
-                _suggestedUsers.value = users
-                _suggestedUsersState.value = if (users.isEmpty()) {
-                    SuggestedUsersState.Empty
-                } else {
-                    SuggestedUsersState.Success
-                }
-            } catch (e: Exception) {
-                _suggestedUsersState.value = SuggestedUsersState.Error(e.message ?: "Failed to load suggested users")
-                _suggestedUsers.value = emptyList()
-            }
-        }
-    }
-
-    /**
-     * Làm mới danh sách người dùng được gợi ý
-     */
-    fun refreshSuggestedUsers() {
-        loadSuggestedUsers()
-    }
 }
 
 /**
@@ -397,14 +367,4 @@ sealed class SearchState {
     object Success : SearchState()
     object Empty : SearchState()
     data class Error(val message: String) : SearchState()
-}
-
-/**
- * State for suggested users
- */
-sealed class SuggestedUsersState {
-    object Loading : SuggestedUsersState()
-    object Success : SuggestedUsersState()
-    object Empty : SuggestedUsersState()
-    data class Error(val message: String) : SuggestedUsersState()
 }

@@ -29,8 +29,9 @@ interface UserRepository {
 
     /**
      * Lấy danh sách người dùng đã từng làm việc cùng trong các team
+     * @param teamId ID của team hiện tại (để loại trừ những người đã trong team)
      * @param limit Số lượng người dùng tối đa cần lấy
      * @return Danh sách người dùng đã từng làm việc cùng
      */
-    suspend fun getRecentCollaborators(limit: Int = 5): List<User>
+    suspend fun getRecentCollaborators(teamId: String, limit: Int = 5): List<User>
 }

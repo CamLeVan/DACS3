@@ -21,6 +21,8 @@ import javax.inject.Singleton
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
+    private val userInteractionDao: UserInteractionDao,
+    private val appSettingsDao: AppSettingsDao,
     private val apiService: ApiService,
     private val dataStoreManager: DataStoreManager,
     private val connectionChecker: ConnectionChecker

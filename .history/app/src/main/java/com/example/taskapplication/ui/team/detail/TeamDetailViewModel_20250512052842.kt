@@ -316,7 +316,8 @@ class TeamDetailViewModel @Inject constructor(
             _suggestedUsersState.value = SuggestedUsersState.Loading
 
             try {
-                val users = userRepository.getRecentCollaborators(5)
+                val teamId = teamId ?: return@launch
+                val users = userRepository.getRecentCollaborators(teamId, 5)
 
                 _suggestedUsers.value = users
                 _suggestedUsersState.value = if (users.isEmpty()) {
@@ -397,14 +398,4 @@ sealed class SearchState {
     object Success : SearchState()
     object Empty : SearchState()
     data class Error(val message: String) : SearchState()
-}
-
-/**
- * State for suggested users
- */
-sealed class SuggestedUsersState {
-    object Loading : SuggestedUsersState()
-    object Success : SuggestedUsersState()
-    object Empty : SuggestedUsersState()
-    data class Error(val message: String) : SuggestedUsersState()
 }

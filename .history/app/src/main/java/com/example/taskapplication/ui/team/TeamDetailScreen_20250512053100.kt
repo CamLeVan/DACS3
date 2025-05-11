@@ -368,13 +368,10 @@ fun TeamDetailScreen(
             inviteState = inviteState,
             searchState = searchState,
             searchResults = searchResults,
-            suggestedUsersState = suggestedUsersState,
-            suggestedUsers = suggestedUsers,
             onDismiss = { viewModel.hideInviteDialog() },
             onInvite = { email -> viewModel.inviteUserToTeam(email) },
             onSearch = { query -> viewModel.searchUsers(query) },
-            onClearSearch = { viewModel.clearSearchResults() },
-            onRefreshSuggestions = { viewModel.refreshSuggestedUsers() }
+            onClearSearch = { viewModel.clearSearchResults() }
         )
     }
 }

@@ -21,6 +21,8 @@ import javax.inject.Singleton
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
+    private val userInteractionDao: UserInteractionDao,
+    private val appSettingsDao: AppSettingsDao,
     private val apiService: ApiService,
     private val dataStoreManager: DataStoreManager,
     private val connectionChecker: ConnectionChecker
@@ -261,18 +263,28 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun getFrequentUsers(limit: Int): List<User> {
         try {
-            // Lấy danh sách người dùng phổ biến
-            return userDao.getFrequentUsers(limit).map { it.toDomainModel() }
+            // Lấy danh sách người dùng phổ biến từ bảng user_interactions
+            val userIds = userInteractionDao.getUserInteractions("").groupBy { it.user_id }
+                .mapValues { (_, interactions) -> interactions.sumOf { it.interaction_count } }
+                .toList()
+                .sortedByDescending { (_, count) -> count }
+                .take(limit)
+                .map { (userId, _) -> userId }
+
+            // Lấy thông tin chi tiết của người dùng
+            val users = userIds.mapNotNull { userId -> userDao.getUserById(userId)?.toDomainModel() }
+
+            return users
         } catch (e: Exception) {
             Log.e(TAG, "Error getting frequent users", e)
             return emptyList()
         }
     }
 
-    override suspend fun getRecentCollaborators(limit: Int): List<User> {
+    override suspend fun getRecentCollaborators(teamId: String, limit: Int): List<User> {
         try {
             // Lấy danh sách người dùng đã từng làm việc cùng
-            val collaborators = userDao.getRecentCollaborators(limit).map { it.toDomainModel() }
+            val collaborators = userDao.getRecentCollaborators(teamId, limit).map { it.toDomainModel() }
 
             // Nếu không đủ số lượng, bổ sung bằng người dùng phổ biến
             if (collaborators.size < limit) {

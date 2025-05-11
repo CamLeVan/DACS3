@@ -48,11 +48,12 @@ interface UserDao {
 
     /**
      * Lấy danh sách người dùng đã từng làm việc cùng trong các team
+     * @param teamId ID của team hiện tại (để loại trừ những người đã trong team)
      * @param limit Số lượng người dùng tối đa cần lấy
      * @return Danh sách người dùng đã từng làm việc cùng
      */
-    @Query("SELECT * FROM users LIMIT :limit")
-    suspend fun getRecentCollaborators(limit: Int): List<UserEntity>
+    @Query("SELECT * FROM users WHERE id NOT IN (SELECT user_id FROM team_members WHERE team_id = :teamId) LIMIT :limit")
+    suspend fun getRecentCollaborators(teamId: String, limit: Int): List<UserEntity>
 
     // Add specific queries as needed
 }
