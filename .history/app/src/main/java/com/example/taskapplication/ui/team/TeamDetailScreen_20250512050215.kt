@@ -133,17 +133,8 @@ fun TeamDetailScreen(
         },
         floatingActionButton = {
             if (teamState is TeamDetailState.Success) {
-                FloatingActionButton(
-                    onClick = { viewModel.showInviteDialog() },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Invite Member",
-                        modifier = Modifier.padding(8.dp)
-                    )
+                FloatingActionButton(onClick = { viewModel.showInviteDialog() }) {
+                    Icon(Icons.Default.Add, contentDescription = "Invite Member")
                 }
             }
         },
