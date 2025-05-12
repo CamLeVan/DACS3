@@ -105,38 +105,24 @@ class WebSocketManager @Inject constructor(
                 "user-typing" -> {
                     val userId = data?.optLong("user_id") ?: return
                     val isTyping = data.optBoolean("is_typing")
-                    val teamId = data.optLong("team_id").toString()
-                    _events.emit(ChatEvent.UserTyping(userId.toString(), isTyping, teamId))
+                    _events.emit(ChatEvent.UserTyping(userId.toString(), isTyping))
                 }
                 "message-reaction-updated" -> {
                     val messageId = data?.optLong("message_id") ?: return
                     val userId = data.optLong("user_id")
                     val reaction = data.optString("reaction")
-                    val timestamp = data.optLong("created_at", System.currentTimeMillis())
-                    _events.emit(ChatEvent.MessageReaction(messageId.toString(), userId.toString(), reaction, timestamp))
+                    val action = data.optString("action")
+                    _events.emit(ChatEvent.MessageReaction(messageId.toString(), userId.toString(), reaction, action))
                 }
                 "message-updated" -> {
-                    val messageId = data?.optLong("id") ?: return
-                    val content = data.optString("message")
-                    val updatedAt = data.optLong("updated_at", System.currentTimeMillis())
-
-                    // Lấy tin nhắn hiện tại từ cơ sở dữ liệu
-                    val existingMessage = messageRepository.getMessageById(messageId.toString())
-                    if (existingMessage != null) {
-                        // Cập nhật nội dung và thời gian cập nhật
-                        val updatedMessage = existingMessage.copy(
-                            content = content,
-                            lastModified = updatedAt
-                        )
-                        messageRepository.updateMessage(updatedMessage)
-                        _events.emit(ChatEvent.MessageUpdated(updatedMessage))
-                    }
+                    val message = parseMessage(data)
+                    messageRepository.updateMessage(message)
+                    _events.emit(ChatEvent.MessageUpdated(message))
                 }
                 "message-deleted" -> {
-                    val messageId = data?.optLong("id") ?: return
-                    val deletedAt = data.optLong("deleted_at", System.currentTimeMillis())
+                    val messageId = data?.optLong("message_id") ?: return
                     messageRepository.markMessageAsDeleted(messageId)
-                    _events.emit(ChatEvent.MessageDeleted(messageId.toString(), deletedAt))
+                    _events.emit(ChatEvent.MessageDeleted(messageId.toString()))
                 }
             }
         } catch (e: Exception) {
@@ -154,12 +140,10 @@ class WebSocketManager @Inject constructor(
     fun sendTypingStatus(teamId: String, isTyping: Boolean) {
         val teamIdLong = teamId.toLongOrNull() ?: return
         val json = JSONObject().apply {
-            put("event", "client-typing")
+            put("event", "typing")
             put("channel", "private-teams.$teamIdLong")
             put("data", JSONObject().apply {
-                put("team_id", teamIdLong)
                 put("is_typing", isTyping)
-                put("timestamp", System.currentTimeMillis())
             })
         }
         webSocket?.send(json.toString())
@@ -227,7 +211,7 @@ class WebSocketManager @Inject constructor(
             messageId = data.optLong("message_id").toString(),
             userId = data.optLong("user_id").toString(),
             readAt = data.optLong("read_at"),
-            serverId = data.optString("id").takeIf { it.isNotEmpty() },
+            serverId = data.optLong("id").toString(),
             syncStatus = "synced",
             lastModified = System.currentTimeMillis()
         )
@@ -237,10 +221,10 @@ class WebSocketManager @Inject constructor(
 sealed class ChatEvent {
     data class NewMessage(val message: Message) : ChatEvent()
     data class MessageRead(val readStatus: MessageReadStatus) : ChatEvent()
-    data class UserTyping(val userId: String, val isTyping: Boolean, val teamId: String) : ChatEvent()
-    data class MessageReaction(val messageId: String, val userId: String, val reaction: String, val timestamp: Long) : ChatEvent()
+    data class UserTyping(val userId: String, val isTyping: Boolean) : ChatEvent()
+    data class MessageReaction(val messageId: String, val userId: String, val reaction: String, val action: String) : ChatEvent()
     data class MessageUpdated(val message: Message) : ChatEvent()
-    data class MessageDeleted(val messageId: String, val deletedAt: Long = System.currentTimeMillis()) : ChatEvent()
+    data class MessageDeleted(val messageId: String) : ChatEvent()
 }
 
 enum class ConnectionState {

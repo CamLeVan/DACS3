@@ -868,7 +868,7 @@ fun MessageInput(
             Spacer(modifier = Modifier.width(8.dp))
 
             // Send button with animation
-            val sendButtonColor = if (value.isBlank() && attachments.isEmpty()) {
+            val sendButtonColor = if (value.isBlank()) {
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
             } else {
                 MaterialTheme.colorScheme.primary
@@ -879,7 +879,7 @@ fun MessageInput(
                     .size(48.dp)
                     .clip(CircleShape)
                     .background(sendButtonColor)
-                    .clickable(enabled = (value.isNotBlank() || attachments.isNotEmpty()) && !isLoading) {
+                    .clickable(enabled = value.isNotBlank() && !isLoading) {
                         onSendClick()
                     },
                 contentAlignment = Alignment.Center

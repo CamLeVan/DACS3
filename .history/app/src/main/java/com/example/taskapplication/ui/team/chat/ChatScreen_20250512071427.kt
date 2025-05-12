@@ -723,12 +723,7 @@ fun MessageInput(
     onValueChange: (String) -> Unit,
     onSendClick: () -> Unit,
     isLoading: Boolean,
-    modifier: Modifier = Modifier,
-    attachments: List<com.example.taskapplication.domain.model.Attachment> = emptyList(),
-    onAddAttachment: () -> Unit = {},
-    onRemoveAttachment: (String) -> Unit = {},
-    isEditing: Boolean = false,
-    onCancelEdit: () -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
     var showEmojiPicker by remember { mutableStateOf(false) }
 
@@ -795,36 +790,13 @@ fun MessageInput(
         ) {
             // Attachment button
             IconButton(
-                onClick = onAddAttachment,
+                onClick = { /* TODO: Implement attachment picker */ },
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Image,
                     contentDescription = "Add attachment",
                     tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                )
-            }
-
-            // Show attachments if any
-            if (attachments.isNotEmpty()) {
-                Text(
-                    text = "${attachments.size} files",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                )
-            }
-
-            // Show editing indicator
-            if (isEditing) {
-                Text(
-                    text = "Editing",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontStyle = FontStyle.Italic,
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .clickable(onClick = onCancelEdit)
                 )
             }
 
@@ -868,7 +840,7 @@ fun MessageInput(
             Spacer(modifier = Modifier.width(8.dp))
 
             // Send button with animation
-            val sendButtonColor = if (value.isBlank() && attachments.isEmpty()) {
+            val sendButtonColor = if (value.isBlank()) {
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
             } else {
                 MaterialTheme.colorScheme.primary
@@ -879,7 +851,7 @@ fun MessageInput(
                     .size(48.dp)
                     .clip(CircleShape)
                     .background(sendButtonColor)
-                    .clickable(enabled = (value.isNotBlank() || attachments.isNotEmpty()) && !isLoading) {
+                    .clickable(enabled = value.isNotBlank() && !isLoading) {
                         onSendClick()
                     },
                 contentAlignment = Alignment.Center

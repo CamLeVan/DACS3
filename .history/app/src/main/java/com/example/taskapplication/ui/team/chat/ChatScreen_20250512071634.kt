@@ -879,7 +879,7 @@ fun MessageInput(
                     .size(48.dp)
                     .clip(CircleShape)
                     .background(sendButtonColor)
-                    .clickable(enabled = (value.isNotBlank() || attachments.isNotEmpty()) && !isLoading) {
+                    .clickable(enabled = value.isNotBlank() && !isLoading) {
                         onSendClick()
                     },
                 contentAlignment = Alignment.Center

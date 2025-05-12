@@ -237,10 +237,10 @@ class WebSocketManager @Inject constructor(
 sealed class ChatEvent {
     data class NewMessage(val message: Message) : ChatEvent()
     data class MessageRead(val readStatus: MessageReadStatus) : ChatEvent()
-    data class UserTyping(val userId: String, val isTyping: Boolean, val teamId: String) : ChatEvent()
-    data class MessageReaction(val messageId: String, val userId: String, val reaction: String, val timestamp: Long) : ChatEvent()
+    data class UserTyping(val userId: String, val isTyping: Boolean) : ChatEvent()
+    data class MessageReaction(val messageId: String, val userId: String, val reaction: String, val action: String) : ChatEvent()
     data class MessageUpdated(val message: Message) : ChatEvent()
-    data class MessageDeleted(val messageId: String, val deletedAt: Long = System.currentTimeMillis()) : ChatEvent()
+    data class MessageDeleted(val messageId: String) : ChatEvent()
 }
 
 enum class ConnectionState {

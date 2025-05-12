@@ -75,10 +75,4 @@ interface MessageDao {
 
     @Query("SELECT COUNT(*) FROM messages WHERE teamId = :teamId AND receiverId = :userId AND isRead = 0")
     fun getUnreadMessagesCount(teamId: String, userId: String): Flow<Int>
-
-    @Query("SELECT COUNT(*) FROM messages WHERE teamId = :teamId AND senderId != :userId AND isRead = 0")
-    suspend fun getUnreadMessageCount(teamId: String, userId: String): Int
-
-    @Query("SELECT DISTINCT teamId FROM messages WHERE teamId IS NOT NULL")
-    suspend fun getTeamsWithMessages(): List<String>
 }

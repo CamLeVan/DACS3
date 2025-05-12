@@ -308,34 +308,5 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_user_interactions_user_id` ON `user_interactions` (`user_id`)")
             }
         }
-
-        // Migration from version 6 to version 7
-        val MIGRATION_6_7 = object : Migration(6, 7) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                // Cập nhật bảng messages để thêm trường clientTempId
-                database.execSQL("ALTER TABLE `messages` ADD COLUMN `clientTempId` TEXT")
-
-                // Tạo bảng attachments
-                database.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS `attachments` (
-                        `id` TEXT PRIMARY KEY NOT NULL,
-                        `messageId` TEXT,
-                        `fileName` TEXT NOT NULL,
-                        `fileSize` INTEGER NOT NULL,
-                        `fileType` TEXT NOT NULL,
-                        `url` TEXT NOT NULL,
-                        `serverId` TEXT,
-                        `syncStatus` TEXT NOT NULL,
-                        `createdAt` INTEGER NOT NULL,
-                        FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
-                    )
-                    """
-                )
-
-                // Tạo chỉ mục cho bảng attachments
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_attachments_messageId` ON `attachments` (`messageId`)")
-            }
-        }
     }
 }

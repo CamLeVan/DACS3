@@ -203,42 +203,6 @@ class MessageRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun retrySendMessage(clientTempId: String): Result<Message> {
-        try {
-            // Tìm tin nhắn theo clientTempId
-            val message = messageDao.getMessageByClientTempId(clientTempId)
-                ?: return Result.failure(IOException("Message not found"))
-
-            // Cập nhật trạng thái để gửi lại
-            val updatedMessage = message.copy(
-                syncStatus = "pending_create",
-                lastModified = System.currentTimeMillis()
-            )
-
-            messageDao.updateMessage(updatedMessage)
-
-            // Nếu có kết nối mạng, gửi lên server
-            if (connectionChecker.isNetworkAvailable()) {
-                try {
-                    // Triển khai gửi lên server ở đây
-                    // Hiện tại chỉ trả về thành công vì chúng ta đã lưu vào local database
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error resending message to server", e)
-                    // Không trả về lỗi vì đã lưu thành công vào local database
-                }
-            }
-
-            // Lấy danh sách tệp đính kèm
-            val attachments = attachmentDao.getAttachmentsByMessageIdSync(updatedMessage.id)
-                .map { it.toDomainModel() }
-
-            return Result.success(updatedMessage.toDomainModel(emptyList(), emptyList(), attachments))
-        } catch (e: Exception) {
-            Log.e(TAG, "Error retrying send message", e)
-            return Result.failure(e)
-        }
-    }
-
     override suspend fun updateMessage(message: Message): Result<Message> {
         try {
             val messageEntity = message.toEntity().copy(
@@ -259,55 +223,9 @@ class MessageRepositoryImpl @Inject constructor(
                 }
             }
 
-            // Lấy danh sách tệp đính kèm
-            val attachments = attachmentDao.getAttachmentsByMessageIdSync(messageEntity.id)
-                .map { it.toDomainModel() }
-
-            return Result.success(messageEntity.toDomainModel(emptyList(), emptyList(), attachments))
+            return Result.success(messageEntity.toDomainModel(emptyList(), emptyList()))
         } catch (e: Exception) {
             Log.e(TAG, "Error updating message", e)
-            return Result.failure(e)
-        }
-    }
-
-    override suspend fun editMessage(messageId: String, newContent: String): Result<Message> {
-        try {
-            val message = messageDao.getMessage(messageId)
-                ?: return Result.failure(IOException("Message not found"))
-
-            // Kiểm tra quyền chỉnh sửa (chỉ người gửi mới có quyền chỉnh sửa)
-            val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
-            if (message.senderId != currentUserId) {
-                return Result.failure(IOException("You don't have permission to edit this message"))
-            }
-
-            // Cập nhật nội dung tin nhắn
-            val updatedMessage = message.copy(
-                content = newContent,
-                syncStatus = "pending_update",
-                lastModified = System.currentTimeMillis()
-            )
-
-            messageDao.updateMessage(updatedMessage)
-
-            // Nếu có kết nối mạng, đồng bộ lên server
-            if (connectionChecker.isNetworkAvailable()) {
-                try {
-                    // Triển khai đồng bộ với server ở đây
-                    // Hiện tại chỉ trả về thành công vì chúng ta đã lưu vào local database
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error editing message on server", e)
-                    // Không trả về lỗi vì đã lưu thành công vào local database
-                }
-            }
-
-            // Lấy danh sách tệp đính kèm
-            val attachments = attachmentDao.getAttachmentsByMessageIdSync(updatedMessage.id)
-                .map { it.toDomainModel() }
-
-            return Result.success(updatedMessage.toDomainModel(emptyList(), emptyList(), attachments))
-        } catch (e: Exception) {
-            Log.e(TAG, "Error editing message", e)
             return Result.failure(e)
         }
     }
@@ -434,39 +352,8 @@ class MessageRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getOlderTeamMessages(teamId: String, olderThan: Long, limit: Int): Result<List<Message>> {
-        try {
-            val messages = messageDao.getOlderTeamMessages(teamId, olderThan, limit)
-            return Result.success(messages.map { entity ->
-                val attachments = attachmentDao.getAttachmentsByMessageIdSync(entity.id)
-                    .map { it.toDomainModel() }
-                entity.toDomainModel(emptyList(), emptyList(), attachments)
-            })
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting older team messages", e)
-            return Result.failure(e)
-        }
-    }
-
-    override suspend fun sendTypingStatus(teamId: String, isTyping: Boolean): Result<Unit> {
-        try {
-            val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
-
-            // Nếu có kết nối mạng, gửi trạng thái đang nhập lên server
-            if (connectionChecker.isNetworkAvailable()) {
-                try {
-                    // Triển khai gửi trạng thái đang nhập lên server
-                    // Hiện tại chỉ trả về thành công
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error sending typing status to server", e)
-                    return Result.failure(e)
-                }
-            }
-
-            return Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error sending typing status", e)
-            return Result.failure(e)
-        }
+        // Triển khai lấy tin nhắn cũ hơn
+        return Result.success(emptyList())
     }
 
     override suspend fun syncMessages(): Result<Unit> {

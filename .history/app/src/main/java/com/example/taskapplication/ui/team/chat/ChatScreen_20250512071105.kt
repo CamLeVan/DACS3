@@ -34,12 +34,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EmojiEmotions
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,10 +52,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -102,9 +97,6 @@ fun ChatScreen(
     val messageText by viewModel.messageText.collectAsState()
     val teamName by viewModel.teamName.collectAsState()
     val currentUserId by viewModel.currentUserId.collectAsState()
-    val typingUsers by viewModel.typingUsers.collectAsState()
-    val attachments by viewModel.attachments.collectAsState()
-    val editingMessage by viewModel.editingMessage.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -190,49 +182,11 @@ fun ChatScreen(
                 tonalElevation = 4.dp,
                 shadowElevation = 8.dp
             ) {
-                // Show typing indicator
-                if (typingUsers.isNotEmpty()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
-                    ) {
-                        val typingNames = typingUsers.keys.take(2).joinToString(", ")
-                        val additionalCount = (typingUsers.size - 2).coerceAtLeast(0)
-                        val typingText = when {
-                            additionalCount > 0 -> "$typingNames and $additionalCount more are typing..."
-                            typingUsers.size > 1 -> "$typingNames are typing..."
-                            else -> "$typingNames is typing..."
-                        }
-
-                        Text(
-                            text = typingText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontStyle = FontStyle.Italic
-                        )
-                    }
-                }
-
-                // Clean up expired typing statuses every 5 seconds
-                LaunchedEffect(Unit) {
-                    while (true) {
-                        delay(5000)
-                        viewModel.cleanupTypingStatuses()
-                    }
-                }
-
                 MessageInput(
                     value = messageText,
                     onValueChange = { viewModel.updateMessageText(it) },
                     onSendClick = { viewModel.sendMessage() },
                     isLoading = sendMessageState is SendMessageState.Sending,
-                    attachments = attachments,
-                    onAddAttachment = { /* TODO: Implement attachment picker */ },
-                    onRemoveAttachment = { viewModel.removeAttachment(it) },
-                    isEditing = editingMessage != null,
-                    onCancelEdit = { viewModel.cancelEditingMessage() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 8.dp)
@@ -365,7 +319,6 @@ fun ChatScreen(
                                     message = message,
                                     isCurrentUser = isCurrentUser,
                                     onDeleteClick = { messageToDelete = message },
-                                    onEditClick = { viewModel.startEditingMessage(message) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = 4.dp)
@@ -580,7 +533,6 @@ fun MessageItem(
                             shape = bubbleShape,
                             clip = true
                         )
-                        .clickable { isHovered = !isHovered }
                 ) {
                     Column(
                         modifier = Modifier.padding(12.dp)
@@ -593,96 +545,11 @@ fun MessageItem(
                                 fontStyle = FontStyle.Italic
                             )
                         } else {
-                            // Message content
                             Text(
                                 text = message.content,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = textColor
                             )
-
-                            // Attachments
-                            if (message.attachments.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Column {
-                                    message.attachments.forEach { attachment ->
-                                        AttachmentItem(
-                                            attachment = attachment,
-                                            textColor = textColor
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                    }
-                                }
-                            }
-
-                            // Message actions for current user
-                            if (isCurrentUser && isHovered && !message.isDeleted) {
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Row(
-                                    horizontalArrangement = Arrangement.End,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    IconButton(
-                                        onClick = onEditClick,
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Edit,
-                                            contentDescription = "Edit message",
-                                            tint = textColor.copy(alpha = 0.7f),
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.width(8.dp))
-
-                                    IconButton(
-                                        onClick = onDeleteClick,
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = "Delete message",
-                                            tint = textColor.copy(alpha = 0.7f),
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Edited indicator
-                            if (message.lastModified > message.createdAt + 60000) { // 1 minute difference
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "(edited)",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontStyle = FontStyle.Italic
-                                    ),
-                                    color = textColor.copy(alpha = 0.5f)
-                                )
-                            }
-
-                            // Pending status
-                            if (message.syncStatus == "pending_create" || message.syncStatus == "pending_update") {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Schedule,
-                                        contentDescription = "Pending",
-                                        tint = textColor.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(12.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "Sending...",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = textColor.copy(alpha = 0.5f)
-                                    )
-                                }
-                            }
                         }
                     }
                 }
@@ -723,12 +590,7 @@ fun MessageInput(
     onValueChange: (String) -> Unit,
     onSendClick: () -> Unit,
     isLoading: Boolean,
-    modifier: Modifier = Modifier,
-    attachments: List<com.example.taskapplication.domain.model.Attachment> = emptyList(),
-    onAddAttachment: () -> Unit = {},
-    onRemoveAttachment: (String) -> Unit = {},
-    isEditing: Boolean = false,
-    onCancelEdit: () -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
     var showEmojiPicker by remember { mutableStateOf(false) }
 
@@ -795,36 +657,13 @@ fun MessageInput(
         ) {
             // Attachment button
             IconButton(
-                onClick = onAddAttachment,
+                onClick = { /* TODO: Implement attachment picker */ },
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Image,
                     contentDescription = "Add attachment",
                     tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                )
-            }
-
-            // Show attachments if any
-            if (attachments.isNotEmpty()) {
-                Text(
-                    text = "${attachments.size} files",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                )
-            }
-
-            // Show editing indicator
-            if (isEditing) {
-                Text(
-                    text = "Editing",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontStyle = FontStyle.Italic,
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .clickable(onClick = onCancelEdit)
                 )
             }
 
@@ -868,7 +707,7 @@ fun MessageInput(
             Spacer(modifier = Modifier.width(8.dp))
 
             // Send button with animation
-            val sendButtonColor = if (value.isBlank() && attachments.isEmpty()) {
+            val sendButtonColor = if (value.isBlank()) {
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
             } else {
                 MaterialTheme.colorScheme.primary
@@ -879,7 +718,7 @@ fun MessageInput(
                     .size(48.dp)
                     .clip(CircleShape)
                     .background(sendButtonColor)
-                    .clickable(enabled = (value.isNotBlank() || attachments.isNotEmpty()) && !isLoading) {
+                    .clickable(enabled = value.isNotBlank() && !isLoading) {
                         onSendClick()
                     },
                 contentAlignment = Alignment.Center
@@ -900,57 +739,5 @@ fun MessageInput(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun AttachmentItem(
-    attachment: com.example.taskapplication.domain.model.Attachment,
-    textColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color.Black.copy(alpha = 0.05f))
-            .padding(8.dp)
-    ) {
-        // File icon
-        Icon(
-            imageVector = Icons.Default.InsertDriveFile,
-            contentDescription = null,
-            tint = textColor.copy(alpha = 0.7f),
-            modifier = Modifier.size(24.dp)
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // File info
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = attachment.fileName,
-                style = MaterialTheme.typography.bodySmall,
-                color = textColor,
-                maxLines = 1
-            )
-
-            Text(
-                text = formatFileSize(attachment.fileSize),
-                style = MaterialTheme.typography.bodySmall,
-                color = textColor.copy(alpha = 0.7f)
-            )
-        }
-    }
-}
-
-// Helper function to format file size
-private fun formatFileSize(size: Long): String {
-    return when {
-        size < 1024 -> "$size B"
-        size < 1024 * 1024 -> "${size / 1024} KB"
-        else -> "${size / (1024 * 1024)} MB"
     }
 }

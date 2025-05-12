@@ -164,10 +164,4 @@ object DatabaseModule {
     fun provideDocumentPermissionDao(database: AppDatabase): DocumentPermissionDao {
         return database.documentPermissionDao()
     }
-
-    @Provides
-    @Singleton
-    fun provideAttachmentDao(database: AppDatabase): AttachmentDao {
-        return database.attachmentDao()
-    }
 }

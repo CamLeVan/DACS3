@@ -10,7 +10,6 @@ import com.example.taskapplication.data.database.entities.MessageEntity
 import com.example.taskapplication.data.database.entities.MessageReadStatusEntity
 import com.example.taskapplication.data.mapper.toDomainModel
 import com.example.taskapplication.data.mapper.toEntity
-import com.example.taskapplication.domain.model.Attachment
 import com.example.taskapplication.data.util.ConnectionChecker
 import com.example.taskapplication.data.util.DataStoreManager
 import com.example.taskapplication.domain.model.Message
@@ -31,7 +30,6 @@ class MessageRepositoryImpl @Inject constructor(
     private val messageDao: MessageDao,
     private val messageReadStatusDao: MessageReadStatusDao,
     private val messageReactionDao: MessageReactionDao,
-    private val attachmentDao: AttachmentDao,
     private val apiService: ApiService,
     private val dataStoreManager: DataStoreManager,
     private val connectionChecker: ConnectionChecker
@@ -42,38 +40,6 @@ class MessageRepositoryImpl @Inject constructor(
     override fun getTeamMessages(teamId: String): Flow<List<Message>> {
         return messageDao.getTeamMessages(teamId)
             .map { entities -> entities.map { it.toDomainModel(emptyList(), emptyList()) } }
-            .flowOn(Dispatchers.IO)
-    }
-
-    override fun getTeamMessages(teamId: String, limit: Int, beforeId: String?, afterId: String?): Flow<List<Message>> {
-        // Triển khai lấy tin nhắn với phân trang
-        return messageDao.getTeamMessages(teamId)
-            .map { entities ->
-                var filteredEntities = entities
-
-                // Lọc theo beforeId nếu có
-                if (beforeId != null) {
-                    val beforeMessage = messageDao.getMessage(beforeId)
-                    if (beforeMessage != null) {
-                        filteredEntities = filteredEntities.filter { it.timestamp < beforeMessage.timestamp }
-                    }
-                }
-
-                // Lọc theo afterId nếu có
-                if (afterId != null) {
-                    val afterMessage = messageDao.getMessage(afterId)
-                    if (afterMessage != null) {
-                        filteredEntities = filteredEntities.filter { it.timestamp > afterMessage.timestamp }
-                    }
-                }
-
-                // Giới hạn số lượng
-                if (filteredEntities.size > limit) {
-                    filteredEntities = filteredEntities.take(limit)
-                }
-
-                filteredEntities.map { it.toDomainModel(emptyList(), emptyList()) }
-            }
             .flowOn(Dispatchers.IO)
     }
 
@@ -90,15 +56,6 @@ class MessageRepositoryImpl @Inject constructor(
     }
 
     override suspend fun sendTeamMessage(teamId: String, content: String): Result<Message> {
-        return sendTeamMessage(teamId, content, UUID.randomUUID().toString(), null)
-    }
-
-    override suspend fun sendTeamMessage(
-        teamId: String,
-        content: String,
-        clientTempId: String,
-        attachments: List<com.example.taskapplication.domain.model.Attachment>?
-    ): Result<Message> {
         try {
             val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
 
@@ -118,22 +75,10 @@ class MessageRepositoryImpl @Inject constructor(
                 lastModified = timestamp,
                 createdAt = timestamp,
                 isDeleted = false,
-                isRead = false,
-                clientTempId = clientTempId
+                isRead = false
             )
 
             messageDao.insertMessage(messageEntity)
-
-            // Lưu các tệp đính kèm nếu có
-            if (attachments != null && attachments.isNotEmpty()) {
-                for (attachment in attachments) {
-                    val attachmentEntity = attachment.toEntity().copy(
-                        messageId = messageId,
-                        syncStatus = "pending_create"
-                    )
-                    attachmentDao.insertAttachment(attachmentEntity)
-                }
-            }
 
             // Nếu có kết nối mạng, gửi lên server
             if (connectionChecker.isNetworkAvailable()) {
@@ -146,14 +91,7 @@ class MessageRepositoryImpl @Inject constructor(
                 }
             }
 
-            // Lấy danh sách tệp đính kèm để trả về
-            val savedAttachments = if (attachments != null && attachments.isNotEmpty()) {
-                attachments
-            } else {
-                emptyList()
-            }
-
-            return Result.success(messageEntity.toDomainModel(emptyList(), emptyList(), savedAttachments))
+            return Result.success(messageEntity.toDomainModel(emptyList(), emptyList()))
         } catch (e: Exception) {
             Log.e(TAG, "Error sending team message", e)
             return Result.failure(e)
@@ -203,42 +141,6 @@ class MessageRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun retrySendMessage(clientTempId: String): Result<Message> {
-        try {
-            // Tìm tin nhắn theo clientTempId
-            val message = messageDao.getMessageByClientTempId(clientTempId)
-                ?: return Result.failure(IOException("Message not found"))
-
-            // Cập nhật trạng thái để gửi lại
-            val updatedMessage = message.copy(
-                syncStatus = "pending_create",
-                lastModified = System.currentTimeMillis()
-            )
-
-            messageDao.updateMessage(updatedMessage)
-
-            // Nếu có kết nối mạng, gửi lên server
-            if (connectionChecker.isNetworkAvailable()) {
-                try {
-                    // Triển khai gửi lên server ở đây
-                    // Hiện tại chỉ trả về thành công vì chúng ta đã lưu vào local database
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error resending message to server", e)
-                    // Không trả về lỗi vì đã lưu thành công vào local database
-                }
-            }
-
-            // Lấy danh sách tệp đính kèm
-            val attachments = attachmentDao.getAttachmentsByMessageIdSync(updatedMessage.id)
-                .map { it.toDomainModel() }
-
-            return Result.success(updatedMessage.toDomainModel(emptyList(), emptyList(), attachments))
-        } catch (e: Exception) {
-            Log.e(TAG, "Error retrying send message", e)
-            return Result.failure(e)
-        }
-    }
-
     override suspend fun updateMessage(message: Message): Result<Message> {
         try {
             val messageEntity = message.toEntity().copy(
@@ -259,55 +161,9 @@ class MessageRepositoryImpl @Inject constructor(
                 }
             }
 
-            // Lấy danh sách tệp đính kèm
-            val attachments = attachmentDao.getAttachmentsByMessageIdSync(messageEntity.id)
-                .map { it.toDomainModel() }
-
-            return Result.success(messageEntity.toDomainModel(emptyList(), emptyList(), attachments))
+            return Result.success(messageEntity.toDomainModel(emptyList(), emptyList()))
         } catch (e: Exception) {
             Log.e(TAG, "Error updating message", e)
-            return Result.failure(e)
-        }
-    }
-
-    override suspend fun editMessage(messageId: String, newContent: String): Result<Message> {
-        try {
-            val message = messageDao.getMessage(messageId)
-                ?: return Result.failure(IOException("Message not found"))
-
-            // Kiểm tra quyền chỉnh sửa (chỉ người gửi mới có quyền chỉnh sửa)
-            val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
-            if (message.senderId != currentUserId) {
-                return Result.failure(IOException("You don't have permission to edit this message"))
-            }
-
-            // Cập nhật nội dung tin nhắn
-            val updatedMessage = message.copy(
-                content = newContent,
-                syncStatus = "pending_update",
-                lastModified = System.currentTimeMillis()
-            )
-
-            messageDao.updateMessage(updatedMessage)
-
-            // Nếu có kết nối mạng, đồng bộ lên server
-            if (connectionChecker.isNetworkAvailable()) {
-                try {
-                    // Triển khai đồng bộ với server ở đây
-                    // Hiện tại chỉ trả về thành công vì chúng ta đã lưu vào local database
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error editing message on server", e)
-                    // Không trả về lỗi vì đã lưu thành công vào local database
-                }
-            }
-
-            // Lấy danh sách tệp đính kèm
-            val attachments = attachmentDao.getAttachmentsByMessageIdSync(updatedMessage.id)
-                .map { it.toDomainModel() }
-
-            return Result.success(updatedMessage.toDomainModel(emptyList(), emptyList(), attachments))
-        } catch (e: Exception) {
-            Log.e(TAG, "Error editing message", e)
             return Result.failure(e)
         }
     }
@@ -402,71 +258,13 @@ class MessageRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUnreadMessageCount(): Result<Map<String, Int>> {
-        try {
-            val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
-
-            // Lấy danh sách team mà người dùng tham gia
-            val teams = messageDao.getTeamsWithMessages()
-            val result = mutableMapOf<String, Int>()
-
-            // Đếm số lượng tin nhắn chưa đọc cho mỗi team
-            for (teamId in teams) {
-                val count = messageDao.getUnreadMessageCount(teamId, currentUserId)
-                result[teamId] = count
-            }
-
-            return Result.success(result)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting unread message count", e)
-            return Result.failure(e)
-        }
-    }
-
-    override suspend fun getTeamUnreadMessageCount(teamId: String): Result<Int> {
-        try {
-            val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
-            val count = messageDao.getUnreadMessageCount(teamId, currentUserId)
-            return Result.success(count)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting team unread message count", e)
-            return Result.failure(e)
-        }
+        // Triển khai lấy số lượng tin nhắn chưa đọc
+        return Result.success(emptyMap())
     }
 
     override suspend fun getOlderTeamMessages(teamId: String, olderThan: Long, limit: Int): Result<List<Message>> {
-        try {
-            val messages = messageDao.getOlderTeamMessages(teamId, olderThan, limit)
-            return Result.success(messages.map { entity ->
-                val attachments = attachmentDao.getAttachmentsByMessageIdSync(entity.id)
-                    .map { it.toDomainModel() }
-                entity.toDomainModel(emptyList(), emptyList(), attachments)
-            })
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting older team messages", e)
-            return Result.failure(e)
-        }
-    }
-
-    override suspend fun sendTypingStatus(teamId: String, isTyping: Boolean): Result<Unit> {
-        try {
-            val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
-
-            // Nếu có kết nối mạng, gửi trạng thái đang nhập lên server
-            if (connectionChecker.isNetworkAvailable()) {
-                try {
-                    // Triển khai gửi trạng thái đang nhập lên server
-                    // Hiện tại chỉ trả về thành công
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error sending typing status to server", e)
-                    return Result.failure(e)
-                }
-            }
-
-            return Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error sending typing status", e)
-            return Result.failure(e)
-        }
+        // Triển khai lấy tin nhắn cũ hơn
+        return Result.success(emptyList())
     }
 
     override suspend fun syncMessages(): Result<Unit> {

@@ -51,8 +51,7 @@ fun Message.toEntity(): MessageEntity {
         lastModified = lastModified,
         createdAt = createdAt,
         isDeleted = isDeleted,
-        isRead = isRead,
-        clientTempId = clientTempId
+        isRead = isRead
     )
 }
 
@@ -69,9 +68,8 @@ fun MessageResponse.toEntity(existingMessage: MessageEntity? = null): MessageEnt
         syncStatus = "synced",
         lastModified = lastModified,
         createdAt = existingMessage?.createdAt ?: createdAt,
-        isDeleted = deletedAt != null,
-        isRead = readBy.any { it.toString() == senderId.toString() },
-        clientTempId = clientTempId ?: existingMessage?.clientTempId
+        isDeleted = false,
+        isRead = readBy.any { it.toString() == senderId.toString() }
     )
 }
 
@@ -147,8 +145,7 @@ fun MessageEntity.toApiRequest(): MessageRequest {
         content = content,
         teamId = teamId,
         receiverId = receiverId,
-        senderId = senderId,
-        clientTempId = clientTempId
+        senderId = senderId
     )
 }
 
@@ -158,7 +155,6 @@ fun Message.toApiRequest(): MessageRequest {
         content = content,
         teamId = teamId,
         receiverId = receiverId,
-        senderId = senderId,
-        clientTempId = clientTempId
+        senderId = senderId
     )
 }

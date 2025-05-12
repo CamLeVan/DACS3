@@ -12,7 +12,6 @@ import com.example.taskapplication.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -113,31 +112,6 @@ class ChatViewModel @Inject constructor(
     }
 
     /**
-     * Load more messages (pagination)
-     */
-    fun loadMoreMessages(limit: Int = 20) {
-        viewModelScope.launch {
-            val currentMessages = when (val state = _messagesState.value) {
-                is MessagesState.Success -> state.messages
-                else -> return@launch
-            }
-
-            if (currentMessages.isEmpty()) return@launch
-
-            val oldestMessage = currentMessages.minByOrNull { it.timestamp }
-            oldestMessage?.let {
-                messageRepository.getOlderTeamMessages(teamId, it.timestamp, limit)
-                    .onSuccess { olderMessages ->
-                        if (olderMessages.isNotEmpty()) {
-                            val updatedMessages = (currentMessages + olderMessages).distinctBy { it.id }
-                            _messagesState.value = MessagesState.Success(updatedMessages)
-                        }
-                    }
-            }
-        }
-    }
-
-    /**
      * Load team details
      */
     private fun loadTeamDetails() {
@@ -154,81 +128,6 @@ class ChatViewModel @Inject constructor(
      */
     fun updateMessageText(text: String) {
         _messageText.value = text
-
-        // Gửi trạng thái đang nhập nếu có nội dung
-        if (text.isNotEmpty() && _editingMessage.value == null) {
-            sendTypingStatus(true)
-        } else if (text.isEmpty()) {
-            sendTypingStatus(false)
-        }
-    }
-
-    /**
-     * Send typing status
-     */
-    private fun sendTypingStatus(isTyping: Boolean) {
-        viewModelScope.launch {
-            messageRepository.sendTypingStatus(teamId, isTyping)
-        }
-    }
-
-    /**
-     * Add attachment
-     */
-    fun addAttachment(attachment: com.example.taskapplication.domain.model.Attachment) {
-        val currentAttachments = _attachments.value.toMutableList()
-        currentAttachments.add(attachment)
-        _attachments.value = currentAttachments
-    }
-
-    /**
-     * Remove attachment
-     */
-    fun removeAttachment(attachmentId: String) {
-        val currentAttachments = _attachments.value.toMutableList()
-        currentAttachments.removeIf { it.id == attachmentId }
-        _attachments.value = currentAttachments
-    }
-
-    /**
-     * Process typing status from other users
-     */
-    fun processTypingStatus(userId: String, isTyping: Boolean, teamId: String) {
-        if (teamId != this.teamId || userId == _currentUserId.value) return
-
-        val currentTypingUsers = _typingUsers.value.toMutableMap()
-
-        if (isTyping) {
-            // Thêm người dùng vào danh sách đang nhập với timestamp hiện tại
-            currentTypingUsers[userId] = System.currentTimeMillis()
-        } else {
-            // Xóa người dùng khỏi danh sách đang nhập
-            currentTypingUsers.remove(userId)
-        }
-
-        _typingUsers.value = currentTypingUsers
-    }
-
-    /**
-     * Clean up expired typing statuses
-     * Call this periodically to remove typing statuses that are too old
-     */
-    fun cleanupTypingStatuses(expirationTimeMs: Long = 5000) {
-        val currentTime = System.currentTimeMillis()
-        val currentTypingUsers = _typingUsers.value.toMutableMap()
-
-        // Xóa các trạng thái đang nhập quá cũ
-        val expiredUsers = currentTypingUsers.filter { (_, timestamp) ->
-            currentTime - timestamp > expirationTimeMs
-        }.keys
-
-        expiredUsers.forEach { userId ->
-            currentTypingUsers.remove(userId)
-        }
-
-        if (expiredUsers.isNotEmpty()) {
-            _typingUsers.value = currentTypingUsers
-        }
     }
 
     /**
@@ -236,77 +135,22 @@ class ChatViewModel @Inject constructor(
      */
     fun sendMessage() {
         val text = _messageText.value.trim()
-        if (text.isEmpty() && _attachments.value.isEmpty()) return
+        if (text.isEmpty()) return
 
         viewModelScope.launch {
             _sendMessageState.value = SendMessageState.Sending
 
             val currentUserId = _currentUserId.value ?: return@launch
-            val clientTempId = UUID.randomUUID().toString()
-            val currentAttachments = _attachments.value
 
-            // Kiểm tra xem đang chỉnh sửa tin nhắn hay gửi tin nhắn mới
-            val editingMsg = _editingMessage.value
-            if (editingMsg != null) {
-                // Chỉnh sửa tin nhắn
-                messageRepository.editMessage(editingMsg.id, text)
-                    .onSuccess {
-                        _sendMessageState.value = SendMessageState.Success
-                        _messageText.value = ""
-                        _editingMessage.value = null
-                    }
-                    .onFailure { e ->
-                        _sendMessageState.value = SendMessageState.Error(e.message ?: "Failed to edit message")
-                    }
-            } else {
-                // Gửi tin nhắn mới
-                messageRepository.sendTeamMessage(teamId, text, clientTempId, currentAttachments)
-                    .onSuccess {
-                        _sendMessageState.value = SendMessageState.Success
-                        _messageText.value = ""
-                        _attachments.value = emptyList()
-
-                        // Gửi trạng thái không còn đang nhập
-                        sendTypingStatus(false)
-                    }
-                    .onFailure { e ->
-                        _sendMessageState.value = SendMessageState.Error(e.message ?: "Failed to send message")
-                    }
-            }
-        }
-    }
-
-    /**
-     * Retry sending a failed message
-     */
-    fun retrySendMessage(clientTempId: String) {
-        viewModelScope.launch {
-            _sendMessageState.value = SendMessageState.Sending
-
-            messageRepository.retrySendMessage(clientTempId)
+            messageRepository.sendTeamMessage(teamId, text)
                 .onSuccess {
                     _sendMessageState.value = SendMessageState.Success
+                    _messageText.value = ""
                 }
                 .onFailure { e ->
-                    _sendMessageState.value = SendMessageState.Error(e.message ?: "Failed to retry sending message")
+                    _sendMessageState.value = SendMessageState.Error(e.message ?: "Failed to send message")
                 }
         }
-    }
-
-    /**
-     * Start editing a message
-     */
-    fun startEditingMessage(message: Message) {
-        _editingMessage.value = message
-        _messageText.value = message.content
-    }
-
-    /**
-     * Cancel editing a message
-     */
-    fun cancelEditingMessage() {
-        _editingMessage.value = null
-        _messageText.value = ""
     }
 
     /**

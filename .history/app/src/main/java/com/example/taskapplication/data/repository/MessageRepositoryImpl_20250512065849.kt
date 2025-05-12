@@ -434,39 +434,8 @@ class MessageRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getOlderTeamMessages(teamId: String, olderThan: Long, limit: Int): Result<List<Message>> {
-        try {
-            val messages = messageDao.getOlderTeamMessages(teamId, olderThan, limit)
-            return Result.success(messages.map { entity ->
-                val attachments = attachmentDao.getAttachmentsByMessageIdSync(entity.id)
-                    .map { it.toDomainModel() }
-                entity.toDomainModel(emptyList(), emptyList(), attachments)
-            })
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting older team messages", e)
-            return Result.failure(e)
-        }
-    }
-
-    override suspend fun sendTypingStatus(teamId: String, isTyping: Boolean): Result<Unit> {
-        try {
-            val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
-
-            // Nếu có kết nối mạng, gửi trạng thái đang nhập lên server
-            if (connectionChecker.isNetworkAvailable()) {
-                try {
-                    // Triển khai gửi trạng thái đang nhập lên server
-                    // Hiện tại chỉ trả về thành công
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error sending typing status to server", e)
-                    return Result.failure(e)
-                }
-            }
-
-            return Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error sending typing status", e)
-            return Result.failure(e)
-        }
+        // Triển khai lấy tin nhắn cũ hơn
+        return Result.success(emptyList())
     }
 
     override suspend fun syncMessages(): Result<Unit> {

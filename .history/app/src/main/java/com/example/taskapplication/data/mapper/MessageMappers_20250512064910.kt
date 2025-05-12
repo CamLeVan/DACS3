@@ -147,8 +147,7 @@ fun MessageEntity.toApiRequest(): MessageRequest {
         content = content,
         teamId = teamId,
         receiverId = receiverId,
-        senderId = senderId,
-        clientTempId = clientTempId
+        senderId = senderId
     )
 }
 
@@ -158,7 +157,6 @@ fun Message.toApiRequest(): MessageRequest {
         content = content,
         teamId = teamId,
         receiverId = receiverId,
-        senderId = senderId,
-        clientTempId = clientTempId
+        senderId = senderId
     )
 }
