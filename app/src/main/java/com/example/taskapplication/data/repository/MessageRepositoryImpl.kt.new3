@@ -1,0 +1,105 @@
+    override suspend fun deleteMessage(messageId: String): Result<Unit> {
+        try {
+            val message = messageDao.getMessage(messageId)
+            if (message != null) {
+                // Nếu message đã được đồng bộ với server, đánh dấu để xóa sau
+                if (message.serverId != null) {
+                    messageDao.markMessageForDeletion(messageId, System.currentTimeMillis())
+                    
+                    // Nếu có kết nối mạng, đồng bộ lên server
+                    if (connectionChecker.isNetworkAvailable()) {
+                        try {
+                            // Triển khai xóa trên server ở đây
+                            // Hiện tại chỉ trả về thành công vì chúng ta đã đánh dấu xóa trong local database
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Lỗi khi xóa tin nhắn trên server", e)
+                            // Không trả về lỗi vì đã đánh dấu xóa thành công trong local database
+                        }
+                    }
+                } else {
+                    // Nếu message chưa được đồng bộ với server, xóa luôn
+                    messageDao.deleteLocalOnlyMessage(messageId)
+                    
+                    // Xóa các tệp đính kèm liên quan
+                    attachmentDao.deleteAttachmentsByMessageId(messageId)
+                }
+            }
+            return Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Lỗi khi xóa tin nhắn", e)
+            return Result.failure(e)
+        }
+    }
+
+    override suspend fun markMessageAsRead(messageId: String): Result<Unit> {
+        try {
+            val message = messageDao.getMessage(messageId)
+            if (message != null && !message.isRead) {
+                val updatedMessage = message.copy(
+                    isRead = true,
+                    lastModified = System.currentTimeMillis()
+                )
+                
+                messageDao.updateMessage(updatedMessage)
+                
+                // Lưu trạng thái đọc
+                val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
+                val readStatus = MessageReadStatusEntity(
+                    id = UUID.randomUUID().toString(),
+                    messageId = messageId,
+                    userId = currentUserId,
+                    readAt = System.currentTimeMillis(),
+                    serverId = null,
+                    syncStatus = "pending_create",
+                    lastModified = System.currentTimeMillis()
+                )
+                messageReadStatusDao.insertReadStatus(readStatus)
+                
+                // Nếu có kết nối mạng, đồng bộ lên server
+                if (connectionChecker.isNetworkAvailable()) {
+                    try {
+                        // Triển khai đồng bộ với server ở đây
+                        // Hiện tại chỉ trả về thành công vì chúng ta đã lưu vào local database
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Lỗi khi đánh dấu tin nhắn đã đọc trên server", e)
+                        // Không trả về lỗi vì đã lưu thành công vào local database
+                    }
+                }
+            }
+            return Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Lỗi khi đánh dấu tin nhắn đã đọc", e)
+            return Result.failure(e)
+        }
+    }
+
+    override suspend fun addReaction(messageId: String, reaction: String): Result<MessageReaction> {
+        // Triển khai thêm phản ứng
+        return Result.failure(IOException("Not implemented"))
+    }
+
+    override suspend fun removeReaction(messageId: String, reactionId: String): Result<Unit> {
+        // Triển khai xóa phản ứng
+        return Result.failure(IOException("Not implemented"))
+    }
+
+    override suspend fun getUnreadMessageCount(): Result<Map<String, Int>> {
+        try {
+            val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
+            
+            // Lấy danh sách team mà người dùng tham gia
+            val teams = messageDao.getTeamsWithMessages()
+            val result = mutableMapOf<String, Int>()
+            
+            // Đếm số lượng tin nhắn chưa đọc cho mỗi team
+            for (teamId in teams) {
+                val count = messageDao.getUnreadMessageCount(teamId, currentUserId)
+                result[teamId] = count
+            }
+            
+            return Result.success(result)
+        } catch (e: Exception) {
+            Log.e(TAG, "Lỗi khi lấy số lượng tin nhắn chưa đọc", e)
+            return Result.failure(e)
+        }
+    }

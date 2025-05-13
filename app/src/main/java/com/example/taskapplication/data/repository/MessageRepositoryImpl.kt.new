@@ -1,0 +1,212 @@
+package com.example.taskapplication.data.repository
+
+import android.util.Log
+import com.example.taskapplication.data.api.ApiService
+import com.example.taskapplication.data.database.dao.AttachmentDao
+import com.example.taskapplication.data.database.dao.MessageDao
+import com.example.taskapplication.data.database.dao.MessageReactionDao
+import com.example.taskapplication.data.database.dao.MessageReadStatusDao
+import com.example.taskapplication.data.database.entities.MessageEntity
+import com.example.taskapplication.data.database.entities.MessageReadStatusEntity
+import com.example.taskapplication.data.mapper.toDomainModel
+import com.example.taskapplication.data.mapper.toEntity
+import com.example.taskapplication.domain.model.Attachment
+import com.example.taskapplication.data.util.ConnectionChecker
+import com.example.taskapplication.data.util.DataStoreManager
+import com.example.taskapplication.domain.model.Message
+import com.example.taskapplication.domain.model.MessageReaction
+import com.example.taskapplication.domain.model.MessageReadStatus
+import com.example.taskapplication.domain.repository.MessageRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import java.io.IOException
+import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class MessageRepositoryImpl @Inject constructor(
+    private val messageDao: MessageDao,
+    private val messageReadStatusDao: MessageReadStatusDao,
+    private val messageReactionDao: MessageReactionDao,
+    private val attachmentDao: AttachmentDao,
+    private val apiService: ApiService,
+    private val dataStoreManager: DataStoreManager,
+    private val connectionChecker: ConnectionChecker
+) : MessageRepository {
+
+    private val TAG = "MessageRepository"
+
+    override fun getTeamMessages(teamId: String): Flow<List<Message>> {
+        return messageDao.getTeamMessages(teamId)
+            .map { entities -> 
+                entities.map { entity -> 
+                    entity.toDomainModel(emptyList(), emptyList(), emptyList()) 
+                } 
+            }
+            .flowOn(Dispatchers.IO)
+    }
+
+    override fun getTeamMessages(teamId: String, limit: Int, beforeId: String?, afterId: String?): Flow<List<Message>> {
+        // Triển khai lấy tin nhắn với phân trang
+        return messageDao.getTeamMessages(teamId)
+            .map { entities ->
+                var filteredEntities = entities
+
+                // Lọc theo beforeId nếu có
+                if (beforeId != null) {
+                    val beforeMessage = messageDao.getMessageSync(beforeId)
+                    if (beforeMessage != null) {
+                        filteredEntities = filteredEntities.filter { it.timestamp < beforeMessage.timestamp }
+                    }
+                }
+
+                // Lọc theo afterId nếu có
+                if (afterId != null) {
+                    val afterMessage = messageDao.getMessageSync(afterId)
+                    if (afterMessage != null) {
+                        filteredEntities = filteredEntities.filter { it.timestamp > afterMessage.timestamp }
+                    }
+                }
+
+                // Giới hạn số lượng
+                if (filteredEntities.size > limit) {
+                    filteredEntities = filteredEntities.take(limit)
+                }
+
+                filteredEntities.map { it.toDomainModel(emptyList(), emptyList(), emptyList()) }
+            }
+            .flowOn(Dispatchers.IO)
+    }
+
+    override fun getDirectMessages(userId1: String, userId2: String): Flow<List<Message>> {
+        return messageDao.getDirectMessages(userId1, userId2)
+            .map { entities -> 
+                entities.map { entity -> 
+                    entity.toDomainModel(emptyList(), emptyList(), emptyList()) 
+                } 
+            }
+            .flowOn(Dispatchers.IO)
+    }
+
+    override suspend fun getMessageById(id: String): Message? {
+        val message = messageDao.getMessage(id) ?: return null
+        // Trong thực tế, bạn sẽ cần lấy thêm thông tin về readBy và reactions
+        return message.toDomainModel(emptyList(), emptyList(), emptyList())
+    }
+
+    override suspend fun sendTeamMessage(teamId: String, content: String): Result<Message> {
+        return sendTeamMessage(teamId, content, UUID.randomUUID().toString(), null)
+    }
+
+    override suspend fun sendTeamMessage(
+        teamId: String,
+        content: String,
+        clientTempId: String,
+        attachments: List<Attachment>?
+    ): Result<Message> {
+        try {
+            val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
+
+            // Tạo message mới
+            val messageId = UUID.randomUUID().toString()
+            val timestamp = System.currentTimeMillis()
+
+            val messageEntity = MessageEntity(
+                id = messageId,
+                content = content,
+                senderId = currentUserId,
+                teamId = teamId,
+                receiverId = null,
+                timestamp = timestamp,
+                serverId = null,
+                syncStatus = "pending_create",
+                lastModified = timestamp,
+                createdAt = timestamp,
+                isDeleted = false,
+                isRead = false,
+                clientTempId = clientTempId
+            )
+
+            messageDao.insertMessage(messageEntity)
+
+            // Lưu các tệp đính kèm nếu có
+            if (attachments != null && attachments.isNotEmpty()) {
+                for (attachment in attachments) {
+                    val attachmentEntity = attachment.toEntity().copy(
+                        messageId = messageId,
+                        syncStatus = "pending_create"
+                    )
+                    attachmentDao.insertAttachment(attachmentEntity)
+                }
+            }
+
+            // Nếu có kết nối mạng, gửi lên server
+            if (connectionChecker.isNetworkAvailable()) {
+                try {
+                    // Triển khai gửi lên server ở đây
+                    // Hiện tại chỉ trả về thành công vì chúng ta đã lưu vào local database
+                } catch (e: Exception) {
+                    Log.e(TAG, "Lỗi khi gửi tin nhắn lên server", e)
+                    // Không trả về lỗi vì đã lưu thành công vào local database
+                }
+            }
+
+            // Lấy danh sách tệp đính kèm để trả về
+            val savedAttachments = if (attachments != null && attachments.isNotEmpty()) {
+                attachments
+            } else {
+                emptyList()
+            }
+
+            return Result.success(messageEntity.toDomainModel(emptyList(), emptyList(), savedAttachments))
+        } catch (e: Exception) {
+            Log.e(TAG, "Lỗi khi gửi tin nhắn nhóm", e)
+            return Result.failure(e)
+        }
+    }
+
+    override suspend fun sendDirectMessage(receiverId: String, content: String): Result<Message> {
+        try {
+            val currentUserId = dataStoreManager.getCurrentUserId() ?: return Result.failure(IOException("User not logged in"))
+
+            // Tạo message mới
+            val messageId = UUID.randomUUID().toString()
+            val timestamp = System.currentTimeMillis()
+
+            val messageEntity = MessageEntity(
+                id = messageId,
+                content = content,
+                senderId = currentUserId,
+                teamId = null,
+                receiverId = receiverId,
+                timestamp = timestamp,
+                serverId = null,
+                syncStatus = "pending_create",
+                lastModified = timestamp,
+                createdAt = timestamp,
+                isDeleted = false,
+                isRead = false
+            )
+
+            messageDao.insertMessage(messageEntity)
+
+            // Nếu có kết nối mạng, gửi lên server
+            if (connectionChecker.isNetworkAvailable()) {
+                try {
+                    // Triển khai gửi lên server ở đây
+                    // Hiện tại chỉ trả về thành công vì chúng ta đã lưu vào local database
+                } catch (e: Exception) {
+                    Log.e(TAG, "Lỗi khi gửi tin nhắn trực tiếp lên server", e)
+                    // Không trả về lỗi vì đã lưu thành công vào local database
+                }
+            }
+
+            return Result.success(messageEntity.toDomainModel(emptyList(), emptyList(), emptyList()))
+        } catch (e: Exception) {
+            Log.e(TAG, "Lỗi khi gửi tin nhắn trực tiếp", e)
+            return Result.failure(e)
+        }
+    }
