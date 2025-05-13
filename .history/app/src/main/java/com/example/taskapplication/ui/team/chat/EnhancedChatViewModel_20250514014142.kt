@@ -320,33 +320,13 @@ class EnhancedChatViewModel @Inject constructor(
         viewModelScope.launch {
             _sendMessageState.value = SendMessageState.Sending
 
-            try {
-                // Find the message with the given clientTempId
-                val currentMessages = (_messagesState.value as? MessagesState.Success)?.messages
-                val messageToRetry = currentMessages?.find { it.clientTempId == clientTempId }
-
-                if (messageToRetry != null) {
-                    // Cập nhật UI ngay lập tức để hiển thị trạng thái "đang gửi"
-                    val updatedMessage = messageToRetry.copy(
-                        syncStatus = "pending_create",
-                        lastModified = System.currentTimeMillis()
-                    )
-
-                    // Cập nhật tin nhắn trong cơ sở dữ liệu cục bộ trước
-                    messageRepository.updateMessage(updatedMessage)
+            messageRepository.retrySendMessage(clientTempId)
+                .onSuccess {
+                    _sendMessageState.value = SendMessageState.Success
                 }
-
-                // Gọi phương thức retry của repository
-                messageRepository.retrySendMessage(clientTempId)
-                    .onSuccess {
-                        _sendMessageState.value = SendMessageState.Success
-                    }
-                    .onFailure { e ->
-                        _sendMessageState.value = SendMessageState.Error(e.message ?: "Không thể gửi lại tin nhắn")
-                    }
-            } catch (e: Exception) {
-                _sendMessageState.value = SendMessageState.Error("Lỗi khi thử gửi lại tin nhắn: ${e.message}")
-            }
+                .onFailure { e ->
+                    _sendMessageState.value = SendMessageState.Error(e.message ?: "Không thể gửi lại tin nhắn")
+                }
         }
     }
 

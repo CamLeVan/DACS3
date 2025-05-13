@@ -601,8 +601,10 @@ fun MessageItem(
                     )
                 }
 
-                // Message bubble with gradient background
-                Box(
+                // Message bubble
+                Card(
+                    shape = bubbleShape,
+                    colors = CardDefaults.cardColors(containerColor = bubbleColor),
                     modifier = Modifier
                         .widthIn(max = 280.dp)
                         .graphicsLayer {
@@ -610,12 +612,10 @@ fun MessageItem(
                             scaleY = scale
                         }
                         .shadow(
-                            elevation = 2.dp,
+                            elevation = 1.dp,
                             shape = bubbleShape,
                             clip = true
                         )
-                        .clip(bubbleShape)
-                        .background(bubbleColor)
                         .clickable { isHovered = !isHovered }
                 ) {
                     Column(
@@ -699,7 +699,87 @@ fun MessageItem(
                                 )
                             }
 
-                            // Đã xóa phần hiển thị trạng thái tin nhắn
+                            // Message status indicator
+                            Spacer(modifier = Modifier.height(4.dp))
+                            when (message.syncStatus) {
+                                "pending_create", "pending_update" -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Schedule,
+                                            contentDescription = "Đang gửi",
+                                            tint = textColor.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Đang gửi...",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = textColor.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                }
+                                "pending_delete" -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Schedule,
+                                            contentDescription = "Đang xóa",
+                                            tint = textColor.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Đang xóa...",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = textColor.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                }
+                                "error" -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Error,
+                                            contentDescription = "Lỗi",
+                                            tint = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Không gửi được. Nhấn để thử lại",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.clickable {
+                                                if (message.clientTempId != null) {
+                                                    onRetryClick(message.clientTempId)
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                                "synced" -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Đã gửi",
+                                            tint = textColor.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Đã gửi",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = textColor.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -715,7 +795,21 @@ fun MessageItem(
                 }
             }
 
-            // Không hiển thị nút xóa riêng nữa vì đã có trong menu khi hover
+            // Delete option (only for current user)
+            if (isCurrentUser && !message.isDeleted) {
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = "Xóa",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable { onDeleteClick() }
+                        .padding(4.dp)
+                )
+            }
         }
     }
 }
@@ -846,89 +940,43 @@ fun MessageInput(
                 )
             }
 
-            // Enhanced text field with animation
+            // Text field
             TextField(
                 value = value,
                 onValueChange = onValueChange,
                 placeholder = {
                     Text(
-                        "Nhập tin nhắn...",
+                        "Nhập tin nhắn",
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                 },
-                modifier = Modifier
-                    .weight(1f)
-                    .shadow(
-                        elevation = 2.dp,
-                        shape = RoundedCornerShape(24.dp)
-                    )
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                                MaterialTheme.colorScheme.surface
-                            )
-                        )
-                    ),
+                modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(24.dp),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surface,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                 ),
-                maxLines = 4,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                maxLines = 4
             )
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Enhanced send button with animation and gradient
-            val isEnabled = (value.isNotBlank() || attachments.isNotEmpty()) && !isLoading
-            val sendButtonBrush = if (isEnabled) {
-                Brush.linearGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                    )
-                )
+            // Send button with animation
+            val sendButtonColor = if (value.isBlank() && attachments.isEmpty()) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
             } else {
-                Brush.linearGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                    )
-                )
+                MaterialTheme.colorScheme.primary
             }
-
-            // Scale animation for send button
-            val buttonScale by animateFloatAsState(
-                targetValue = if (isEnabled) 1f else 0.9f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                ),
-                label = "Send Button Scale Animation"
-            )
 
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .graphicsLayer {
-                        scaleX = buttonScale
-                        scaleY = buttonScale
-                    }
-                    .shadow(
-                        elevation = if (isEnabled) 4.dp else 1.dp,
-                        shape = CircleShape
-                    )
                     .clip(CircleShape)
-                    .background(sendButtonBrush)
-                    .clickable(enabled = isEnabled) {
+                    .background(sendButtonColor)
+                    .clickable(enabled = (value.isNotBlank() || attachments.isNotEmpty()) && !isLoading) {
                         onSendClick()
                     },
                 contentAlignment = Alignment.Center
@@ -942,7 +990,7 @@ fun MessageInput(
                 } else {
                     Icon(
                         imageVector = Icons.Default.Send,
-                        contentDescription = "Gửi tin nhắn",
+                        contentDescription = "Send Message",
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(20.dp)
                     )

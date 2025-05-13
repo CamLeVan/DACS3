@@ -333,7 +333,7 @@ class EnhancedChatViewModel @Inject constructor(
                     )
 
                     // Cập nhật tin nhắn trong cơ sở dữ liệu cục bộ trước
-                    messageRepository.updateMessage(updatedMessage)
+                    messageRepository.updateLocalMessage(updatedMessage)
                 }
 
                 // Gọi phương thức retry của repository

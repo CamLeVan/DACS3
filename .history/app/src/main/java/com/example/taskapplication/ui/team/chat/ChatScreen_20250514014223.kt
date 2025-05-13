@@ -699,7 +699,87 @@ fun MessageItem(
                                 )
                             }
 
-                            // Đã xóa phần hiển thị trạng thái tin nhắn
+                            // Message status indicator
+                            Spacer(modifier = Modifier.height(4.dp))
+                            when (message.syncStatus) {
+                                "pending_create", "pending_update" -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Schedule,
+                                            contentDescription = "Đang gửi",
+                                            tint = textColor.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Đang gửi...",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = textColor.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                }
+                                "pending_delete" -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Schedule,
+                                            contentDescription = "Đang xóa",
+                                            tint = textColor.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Đang xóa...",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = textColor.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                }
+                                "error" -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Error,
+                                            contentDescription = "Lỗi",
+                                            tint = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Không gửi được. Nhấn để thử lại",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.clickable {
+                                                if (message.clientTempId != null) {
+                                                    onRetryClick(message.clientTempId)
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                                "synced" -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Đã gửi",
+                                            tint = textColor.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Đã gửi",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = textColor.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -715,7 +795,21 @@ fun MessageItem(
                 }
             }
 
-            // Không hiển thị nút xóa riêng nữa vì đã có trong menu khi hover
+            // Delete option (only for current user)
+            if (isCurrentUser && !message.isDeleted) {
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = "Xóa",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable { onDeleteClick() }
+                        .padding(4.dp)
+                )
+            }
         }
     }
 }
@@ -941,7 +1035,7 @@ fun MessageInput(
                     )
                 } else {
                     Icon(
-                        imageVector = Icons.Default.Send,
+                        imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = "Gửi tin nhắn",
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(20.dp)
