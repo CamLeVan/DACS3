@@ -81,9 +81,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.taskapplication.R
 import com.example.taskapplication.domain.model.Message
 import com.example.taskapplication.ui.components.ConfirmationDialog
 import kotlinx.coroutines.delay
@@ -166,7 +164,7 @@ fun ChatScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
+                            contentDescription = "Back",
                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
@@ -175,7 +173,7 @@ fun ChatScreen(
                     IconButton(onClick = { /* TODO: Show menu */ }) {
                         Icon(
                             Icons.Default.MoreVert,
-                            contentDescription = stringResource(R.string.more_options),
+                            contentDescription = "More options",
                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
@@ -275,7 +273,7 @@ fun ChatScreen(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             Text(
-                                text = stringResource(R.string.loading_messages),
+                                text = "Đang tải tin nhắn...",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                             )
@@ -312,7 +310,7 @@ fun ChatScreen(
                             Spacer(modifier = Modifier.height(24.dp))
 
                             Text(
-                                text = stringResource(R.string.no_messages),
+                                text = "Chưa có tin nhắn nào",
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
@@ -322,7 +320,7 @@ fun ChatScreen(
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                text = stringResource(R.string.start_conversation),
+                                text = "Bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn cho nhóm của bạn",
                                 style = MaterialTheme.typography.bodyLarge,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
@@ -427,7 +425,7 @@ fun ChatScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete, // Sử dụng biểu tượng lỗi phù hợp hơn
-                                contentDescription = stringResource(R.string.error_occurred),
+                                contentDescription = "Lỗi",
                                 tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(64.dp)
                             )
@@ -435,7 +433,7 @@ fun ChatScreen(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             Text(
-                                text = stringResource(R.string.error_occurred),
+                                text = "Đã xảy ra lỗi!",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.error,
                                 fontWeight = FontWeight.Bold
@@ -458,7 +456,7 @@ fun ChatScreen(
                                     contentColor = MaterialTheme.colorScheme.primary
                                 )
                             ) {
-                                Text(stringResource(R.string.retry))
+                                Text("Thử lại")
                             }
                         }
                     }
@@ -470,9 +468,9 @@ fun ChatScreen(
     // Confirmation dialog for deleting message
     messageToDelete?.let { message ->
         ConfirmationDialog(
-            title = stringResource(R.string.delete_message),
-            message = stringResource(R.string.delete_message_confirmation),
-            confirmButtonText = stringResource(R.string.delete),
+            title = "Xóa tin nhắn",
+            message = "Bạn có chắc chắn muốn xóa tin nhắn này? Hành động này không thể hoàn tác.",
+            confirmButtonText = "Xóa",
             onConfirm = {
                 viewModel.deleteMessage(message.id)
                 messageToDelete = null
@@ -651,7 +649,7 @@ fun MessageItem(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Edit,
-                                            contentDescription = stringResource(R.string.edit),
+                                            contentDescription = "Edit message",
                                             tint = textColor.copy(alpha = 0.7f),
                                             modifier = Modifier.size(16.dp)
                                         )
@@ -665,7 +663,7 @@ fun MessageItem(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Delete,
-                                            contentDescription = stringResource(R.string.delete_message),
+                                            contentDescription = "Delete message",
                                             tint = textColor.copy(alpha = 0.7f),
                                             modifier = Modifier.size(16.dp)
                                         )

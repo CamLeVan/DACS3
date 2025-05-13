@@ -391,32 +391,5 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_message_reactions_userId` ON `message_reactions` (`userId`)")
             }
         }
-
-        // Migration from version 9 to version 10
-        val MIGRATION_9_10 = object : Migration(9, 10) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                // Xóa bảng cũ nếu tồn tại
-                database.execSQL("DROP TABLE IF EXISTS `message_reactions`")
-
-                // Tạo lại bảng với cấu trúc chính xác theo schema mong đợi, bao gồm khóa ngoại
-                database.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS `message_reactions` (
-                        `id` TEXT PRIMARY KEY NOT NULL,
-                        `messageId` TEXT NOT NULL,
-                        `userId` TEXT NOT NULL,
-                        `reaction` TEXT,
-                        `serverId` TEXT,
-                        `lastModified` INTEGER NOT NULL,
-                        FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
-                    )
-                    """
-                )
-
-                // Tạo chỉ mục cho bảng message_reactions
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_message_reactions_messageId` ON `message_reactions` (`messageId`)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_message_reactions_userId` ON `message_reactions` (`userId`)")
-            }
-        }
     }
 }

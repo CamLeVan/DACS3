@@ -81,9 +81,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.taskapplication.R
 import com.example.taskapplication.domain.model.Message
 import com.example.taskapplication.ui.components.ConfirmationDialog
 import kotlinx.coroutines.delay

@@ -81,9 +81,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.taskapplication.R
 import com.example.taskapplication.domain.model.Message
 import com.example.taskapplication.ui.components.ConfirmationDialog
 import kotlinx.coroutines.delay
@@ -651,7 +649,7 @@ fun MessageItem(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Edit,
-                                            contentDescription = stringResource(R.string.edit),
+                                            contentDescription = "Edit message",
                                             tint = textColor.copy(alpha = 0.7f),
                                             modifier = Modifier.size(16.dp)
                                         )
@@ -665,7 +663,7 @@ fun MessageItem(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Delete,
-                                            contentDescription = stringResource(R.string.delete_message),
+                                            contentDescription = "Delete message",
                                             tint = textColor.copy(alpha = 0.7f),
                                             modifier = Modifier.size(16.dp)
                                         )

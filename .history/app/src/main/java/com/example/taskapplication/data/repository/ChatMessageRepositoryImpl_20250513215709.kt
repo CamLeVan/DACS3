@@ -770,6 +770,7 @@ class ChatMessageRepositoryImpl @Inject constructor(
                 userId = currentUserId,
                 reaction = reaction,
                 serverId = null,
+                syncStatus = "synced",
                 lastModified = timestamp
             )
 
@@ -962,6 +963,7 @@ class ChatMessageRepositoryImpl @Inject constructor(
                         userId = reaction.userId.toString(),
                         reaction = reaction.reaction,
                         serverId = null,
+                        syncStatus = "synced",
                         lastModified = System.currentTimeMillis()
                     )
 

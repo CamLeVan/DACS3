@@ -39,7 +39,7 @@ import com.example.taskapplication.data.local.entity.TeamRoleHistoryEntity
         AppSettingsEntity::class,
         AttachmentEntity::class
     ],
-    version = 10,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -335,87 +335,6 @@ abstract class AppDatabase : RoomDatabase() {
 
                 // Tạo chỉ mục cho bảng attachments
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_attachments_messageId` ON `attachments` (`messageId`)")
-            }
-        }
-
-        // Migration from version 7 to version 8
-        val MIGRATION_7_8 = object : Migration(7, 8) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                // Xóa bảng cũ nếu tồn tại
-                database.execSQL("DROP TABLE IF EXISTS `message_reactions`")
-
-                // Tạo lại bảng với cấu trúc chính xác
-                database.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS `message_reactions` (
-                        `id` TEXT PRIMARY KEY NOT NULL,
-                        `messageId` TEXT NOT NULL,
-                        `userId` TEXT NOT NULL,
-                        `reaction` TEXT,
-                        `serverId` TEXT,
-                        `syncStatus` TEXT NOT NULL,
-                        `lastModified` INTEGER NOT NULL
-                    )
-                    """
-                )
-
-                // Tạo chỉ mục cho bảng message_reactions
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_message_reactions_messageId` ON `message_reactions` (`messageId`)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_message_reactions_userId` ON `message_reactions` (`userId`)")
-            }
-        }
-
-        // Migration from version 8 to version 9
-        val MIGRATION_8_9 = object : Migration(8, 9) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                // Xóa bảng cũ nếu tồn tại
-                database.execSQL("DROP TABLE IF EXISTS `message_reactions`")
-
-                // Tạo lại bảng với cấu trúc chính xác
-                database.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS `message_reactions` (
-                        `id` TEXT PRIMARY KEY NOT NULL,
-                        `messageId` TEXT NOT NULL,
-                        `userId` TEXT NOT NULL,
-                        `reaction` TEXT,
-                        `serverId` TEXT,
-                        `syncStatus` TEXT NOT NULL,
-                        `lastModified` INTEGER NOT NULL
-                    )
-                    """
-                )
-
-                // Tạo chỉ mục cho bảng message_reactions
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_message_reactions_messageId` ON `message_reactions` (`messageId`)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_message_reactions_userId` ON `message_reactions` (`userId`)")
-            }
-        }
-
-        // Migration from version 9 to version 10
-        val MIGRATION_9_10 = object : Migration(9, 10) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                // Xóa bảng cũ nếu tồn tại
-                database.execSQL("DROP TABLE IF EXISTS `message_reactions`")
-
-                // Tạo lại bảng với cấu trúc chính xác theo schema mong đợi, bao gồm khóa ngoại
-                database.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS `message_reactions` (
-                        `id` TEXT PRIMARY KEY NOT NULL,
-                        `messageId` TEXT NOT NULL,
-                        `userId` TEXT NOT NULL,
-                        `reaction` TEXT,
-                        `serverId` TEXT,
-                        `lastModified` INTEGER NOT NULL,
-                        FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
-                    )
-                    """
-                )
-
-                // Tạo chỉ mục cho bảng message_reactions
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_message_reactions_messageId` ON `message_reactions` (`messageId`)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_message_reactions_userId` ON `message_reactions` (`userId`)")
             }
         }
     }

@@ -93,8 +93,8 @@
     <string name="editing_message">Đang chỉnh sửa tin nhắn</string>
     <string name="message_count">%d tin nhắn</string>
     <string name="typing_single">%s đang nhập...</string>
-    <string name="typing_multiple" formatted="false">%s và %s đang nhập...</string>
-    <string name="typing_more" formatted="false">%s, %s và %d người khác đang nhập...</string>
+    <string name="typing_multiple">%s và %s đang nhập...</string>
+    <string name="typing_more">%s, %s và %d người khác đang nhập...</string>
 
     <!-- Main Navigation -->
     <string name="nav_personal_tasks">Công việc cá nhân</string>

@@ -66,11 +66,6 @@ fun ApiAttachment.toDomainModel(): Attachment {
 
 fun ApiReaction.toDomainModel(): MessageReaction {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.getDefault())
-    val lastModified = try {
-        dateFormat.parse(createdAt)?.time ?: System.currentTimeMillis()
-    } catch (e: Exception) {
-        System.currentTimeMillis()
-    }
 
     return MessageReaction(
         id = UUID.randomUUID().toString(), // API không trả về ID cho reaction
@@ -78,7 +73,11 @@ fun ApiReaction.toDomainModel(): MessageReaction {
         userId = userId.toString(),
         reaction = reaction,
         serverId = null,
-        lastModified = lastModified
+        timestamp = try {
+            dateFormat.parse(createdAt)?.time ?: System.currentTimeMillis()
+        } catch (e: Exception) {
+            System.currentTimeMillis()
+        }
     )
 }
 

@@ -83,6 +83,8 @@ fun MessageReactionEntity.toDomainModel(): MessageReaction {
         userId = userId,
         reaction = reaction ?: "",
         serverId = serverId,
+        timestamp = System.currentTimeMillis(), // Sử dụng thời gian hiện tại cho timestamp
+        syncStatus = syncStatus,
         lastModified = lastModified
     )
 }
@@ -95,6 +97,7 @@ fun MessageReaction.toEntity(): MessageReactionEntity {
         userId = userId,
         reaction = reaction,
         serverId = serverId,
+        syncStatus = syncStatus,
         lastModified = lastModified
     )
 }
@@ -107,6 +110,7 @@ fun ReactionResponse.toEntity(existingReaction: MessageReactionEntity? = null): 
         userId = userId.toString(),
         reaction = reaction,
         serverId = id.toString(),
+        syncStatus = "synced",
         lastModified = createdAt
     )
 }

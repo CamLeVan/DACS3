@@ -107,6 +107,7 @@ fun ReactionResponse.toEntity(existingReaction: MessageReactionEntity? = null): 
         userId = userId.toString(),
         reaction = reaction,
         serverId = id.toString(),
+        syncStatus = "synced",
         lastModified = createdAt
     )
 }

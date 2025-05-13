@@ -398,7 +398,7 @@ abstract class AppDatabase : RoomDatabase() {
                 // Xóa bảng cũ nếu tồn tại
                 database.execSQL("DROP TABLE IF EXISTS `message_reactions`")
 
-                // Tạo lại bảng với cấu trúc chính xác theo schema mong đợi, bao gồm khóa ngoại
+                // Tạo lại bảng với cấu trúc chính xác theo schema mong đợi
                 database.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `message_reactions` (
@@ -407,8 +407,7 @@ abstract class AppDatabase : RoomDatabase() {
                         `userId` TEXT NOT NULL,
                         `reaction` TEXT,
                         `serverId` TEXT,
-                        `lastModified` INTEGER NOT NULL,
-                        FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                        `lastModified` INTEGER NOT NULL
                     )
                     """
                 )
