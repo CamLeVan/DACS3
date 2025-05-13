@@ -50,12 +50,12 @@ class ChatWebSocketClient @Inject constructor(
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 Log.d(TAG, "WebSocket connection opened")
                 isConnected = true
-
+                
                 // Resubscribe to previously subscribed channels
                 subscribedChannels.forEach { channel ->
                     subscribeToChannel(channel)
                 }
-
+                
                 messageHandler?.onConnectionOpened()
             }
 
@@ -116,10 +116,10 @@ class ChatWebSocketClient @Inject constructor(
         })
     }
 
-    fun subscribeToTeamChat(teamId: String) {
+    fun subscribeToTeamChat(teamId: Long) {
         val channel = "team.$teamId.chat"
         subscribedChannels.add(channel)
-
+        
         if (isConnected) {
             subscribeToChannel(channel)
         }
