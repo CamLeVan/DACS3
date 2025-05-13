@@ -316,7 +316,8 @@ class EnhancedChatViewModel @Inject constructor(
                     isRead = true,
                     clientTempId = clientTempId,
                     attachments = currentAttachments,
-                    reactions = emptyList()
+                    reactions = emptyList(),
+                    readStatuses = emptyList()
                 )
 
                 // Cập nhật UI ngay lập tức với tin nhắn mới
