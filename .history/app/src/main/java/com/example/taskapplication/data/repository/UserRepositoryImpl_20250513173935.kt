@@ -276,16 +276,7 @@ class UserRepositoryImpl @Inject constructor(
                         Log.e(TAG, "🚨 API call successful")
                         val responseBody = response.body()
                         if (responseBody != null) {
-                            // Xử lý cả hai trường hợp: API trả về danh sách users hoặc một user duy nhất
-                            val usersList = if (responseBody.user != null) {
-                                // Nếu API trả về một user duy nhất trong trường "user"
-                                Log.e(TAG, "🚨 Server returned a single user in 'user' field")
-                                listOf(responseBody.user)
-                            } else {
-                                // Nếu API trả về danh sách users trong trường "users"
-                                responseBody.users
-                            }
-
+                            val usersList = responseBody.users
                             Log.e(TAG, "🚨 Server results count: ${usersList.size}")
                             Log.e(TAG, "🚨 Server response total: ${responseBody.total}")
                             Log.e(TAG, "🚨 Server response message: ${responseBody.message}")
@@ -298,23 +289,6 @@ class UserRepositoryImpl @Inject constructor(
 
                             val serverResults = usersList.map { it.toDomainModel() }
                             Log.e(TAG, "🚨 Server results after mapping: ${serverResults.size}")
-
-                            // Lưu kết quả từ server vào cơ sở dữ liệu cục bộ
-                            try {
-                                Log.e(TAG, "🚨 Saving server results to local database")
-                                serverResults.forEach { user ->
-                                    // Kiểm tra xem người dùng đã tồn tại trong cơ sở dữ liệu cục bộ chưa
-                                    val existingUser = userDao.getUserById(user.id)
-                                    if (existingUser == null) {
-                                        Log.e(TAG, "🚨 Saving user to local database: id=${user.id}, name='${user.name}', email='${user.email}'")
-                                        userDao.insertUser(user.toEntity())
-                                    } else {
-                                        Log.e(TAG, "🚨 User already exists in local database: id=${user.id}, name='${user.name}', email='${user.email}'")
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "🚨 Error saving server results to local database", e)
-                            }
 
                             // Kết hợp kết quả từ local và server, loại bỏ trùng lặp và giới hạn số lượng
                             val combinedResults = (localResults + serverResults)

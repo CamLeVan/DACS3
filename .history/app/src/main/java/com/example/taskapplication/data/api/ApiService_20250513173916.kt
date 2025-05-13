@@ -2,7 +2,6 @@ package com.example.taskapplication.data.api
 
 import com.example.taskapplication.data.api.request.*
 import com.example.taskapplication.data.api.response.*
-import com.example.taskapplication.data.api.response.SearchUsersResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*

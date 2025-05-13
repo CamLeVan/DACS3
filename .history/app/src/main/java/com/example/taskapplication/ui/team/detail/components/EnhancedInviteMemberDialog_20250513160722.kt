@@ -1,6 +1,5 @@
 package com.example.taskapplication.ui.team.detail.components
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -237,14 +236,11 @@ fun EnhancedInviteMemberDialog(
                 OutlinedTextField(
                     value = email,
                     onValueChange = {
-                        Log.d("InviteMemberDialog", "📝 Text changed: '$it'")
                         email = it
                         selectedUser = null
                         if (it.length >= 2) { // Chỉ tìm kiếm khi có ít nhất 2 ký tự
-                            Log.d("InviteMemberDialog", "🔍 Calling onSearch with query: '$it'")
                             onSearch(it)
                         } else {
-                            Log.d("InviteMemberDialog", "🧹 Calling onClearSearch (query too short)")
                             onClearSearch()
                         }
                     },

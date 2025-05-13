@@ -1,6 +1,5 @@
 package com.example.taskapplication.ui.team.detail
 
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -34,10 +33,6 @@ class TeamDetailViewModel @Inject constructor(
     private val dataStoreManager: DataStoreManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-
-    companion object {
-        private const val TAG = "TeamDetailViewModel"
-    }
 
     // Team ID from navigation arguments
     private val teamId: String = checkNotNull(savedStateHandle.get<String>("teamId"))

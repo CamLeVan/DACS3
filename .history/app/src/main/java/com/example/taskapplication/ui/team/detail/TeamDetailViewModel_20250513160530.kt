@@ -1,6 +1,5 @@
 package com.example.taskapplication.ui.team.detail
 
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -34,10 +33,6 @@ class TeamDetailViewModel @Inject constructor(
     private val dataStoreManager: DataStoreManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-
-    companion object {
-        private const val TAG = "TeamDetailViewModel"
-    }
 
     // Team ID from navigation arguments
     private val teamId: String = checkNotNull(savedStateHandle.get<String>("teamId"))
@@ -309,64 +304,28 @@ class TeamDetailViewModel @Inject constructor(
     }
 
     /**
-     * Job để quản lý tìm kiếm với debounce
-     */
-    private var searchJob: Job? = null
-
-    /**
-     * Tìm kiếm người dùng theo tên hoặc email với debounce
+     * Tìm kiếm người dùng theo tên hoặc email
      */
     fun searchUsers(query: String) {
-        Log.d(TAG, "🔍 ViewModel.searchUsers() called with query: '$query'")
+        viewModelScope.launch {
+            if (query.isBlank()) {
+                _searchResults.value = emptyList()
+                _searchState.value = SearchState.Idle
+                return@launch
+            }
 
-        // Hủy job tìm kiếm trước đó nếu có
-        searchJob?.cancel()
-        Log.d(TAG, "🔄 Previous search job cancelled")
-
-        if (query.isBlank()) {
-            Log.d(TAG, "❌ Query is blank, setting state to Idle")
-            _searchResults.value = emptyList()
-            _searchState.value = SearchState.Idle
-            return
-        }
-
-        if (query.length < 2) {
-            Log.d(TAG, "❌ Query too short (< 2 chars), setting state to Idle")
-            _searchState.value = SearchState.Idle
-            return
-        }
-
-        Log.d(TAG, "⏳ Setting state to Loading")
-        _searchState.value = SearchState.Loading
-
-        // Tạo job mới với debounce 300ms
-        searchJob = viewModelScope.launch {
-            Log.d(TAG, "⏱️ Starting debounce (300ms) for query: '$query'")
-            delay(300) // Debounce 300ms
-            Log.d(TAG, "✅ Debounce completed, executing search for: '$query'")
+            _searchState.value = SearchState.Loading
 
             try {
-                Log.d(TAG, "🔍 Calling userRepository.searchUsers('$query')")
                 val results = userRepository.searchUsers(query)
-                Log.d(TAG, "📊 Search results count: ${results.size}")
-
-                // Log chi tiết từng kết quả
-                results.forEachIndexed { index, user ->
-                    Log.d(TAG, "📝 Result #${index + 1}: id=${user.id}, name='${user.name}', email='${user.email}'")
-                }
-
                 _searchResults.value = results
-
-                if (results.isEmpty()) {
-                    Log.d(TAG, "📭 No results found, setting state to Empty")
-                    _searchState.value = SearchState.Empty
+                _searchState.value = if (results.isEmpty()) {
+                    SearchState.Empty
                 } else {
-                    Log.d(TAG, "✅ Results found, setting state to Success")
-                    _searchState.value = SearchState.Success
+                    SearchState.Success
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "❌ Error searching users", e)
-                _searchState.value = SearchState.Error(e.message ?: "Không thể tìm kiếm người dùng")
+                _searchState.value = SearchState.Error(e.message ?: "Failed to search users")
                 _searchResults.value = emptyList()
             }
         }

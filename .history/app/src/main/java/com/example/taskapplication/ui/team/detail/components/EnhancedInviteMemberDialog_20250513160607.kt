@@ -1,6 +1,5 @@
 package com.example.taskapplication.ui.team.detail.components
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -237,18 +236,15 @@ fun EnhancedInviteMemberDialog(
                 OutlinedTextField(
                     value = email,
                     onValueChange = {
-                        Log.d("InviteMemberDialog", "📝 Text changed: '$it'")
                         email = it
                         selectedUser = null
                         if (it.length >= 2) { // Chỉ tìm kiếm khi có ít nhất 2 ký tự
-                            Log.d("InviteMemberDialog", "🔍 Calling onSearch with query: '$it'")
                             onSearch(it)
                         } else {
-                            Log.d("InviteMemberDialog", "🧹 Calling onClearSearch (query too short)")
                             onClearSearch()
                         }
                     },
-                    label = { Text("Nhập email hoặc tên người dùng") },
+                    label = { Text("Email Address or Name") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Email,
@@ -301,25 +297,11 @@ fun EnhancedInviteMemberDialog(
                     exit = fadeOut() + shrinkVertically()
                 ) {
                     Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search Results",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            Text(
-                                text = "Kết quả tìm kiếm (${searchResults.size})",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                        Text(
+                            text = "Search Results",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -346,57 +328,27 @@ fun EnhancedInviteMemberDialog(
 
                 // Search state
                 AnimatedVisibility(
-                    visible = searchState is SearchState.Loading || searchState is SearchState.Empty || (email.length in 1..1),
+                    visible = searchState is SearchState.Loading || searchState is SearchState.Empty,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
-                    when {
-                        searchState is SearchState.Loading -> {
-                            Row(
+                    when (searchState) {
+                        is SearchState.Loading -> {
+                            LinearProgressIndicator(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                LinearProgressIndicator(
-                                    modifier = Modifier.weight(1f),
-                                    color = MaterialTheme.colorScheme.secondary
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Đang tìm kiếm...",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.secondary
-                                )
-                            }
-                        }
-                        searchState is SearchState.Empty && email.length >= 2 -> {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = "No Results",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Không tìm thấy người dùng nào phù hợp với '$email'",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        email.length == 1 -> {
-                            Text(
-                                text = "Nhập thêm ký tự để tìm kiếm",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
+                                color = MaterialTheme.colorScheme.secondary
                             )
+                        }
+                        is SearchState.Empty -> {
+                            if (email.isNotBlank()) {
+                                Text(
+                                    text = "No users found matching '$email'",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         }
                         else -> { /* Do nothing */ }
                     }

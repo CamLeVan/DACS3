@@ -35,10 +35,6 @@ class TeamDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    companion object {
-        private const val TAG = "TeamDetailViewModel"
-    }
-
     // Team ID from navigation arguments
     private val teamId: String = checkNotNull(savedStateHandle.get<String>("teamId"))
 

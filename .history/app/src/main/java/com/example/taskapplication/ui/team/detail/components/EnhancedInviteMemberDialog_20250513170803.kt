@@ -1,6 +1,5 @@
 package com.example.taskapplication.ui.team.detail.components
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween

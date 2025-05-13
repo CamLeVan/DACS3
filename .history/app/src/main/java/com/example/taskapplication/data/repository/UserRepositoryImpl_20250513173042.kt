@@ -233,11 +233,11 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun searchUsers(query: String, limit: Int): List<User> {
-        Log.e(TAG, "🚨 SEARCH USERS CALLED: query='$query', limit=$limit")
+        Log.d(TAG, "🔍 searchUsers() called with query: '$query', limit: $limit")
 
         // Yêu cầu ít nhất 2 ký tự để tìm kiếm
         if (query.length < 2) {
-            Log.e(TAG, "🚨 Query too short (< 2 chars), returning empty list")
+            Log.d(TAG, "❌ Query too short (< 2 chars), returning empty list")
             return emptyList()
         }
 
@@ -257,99 +257,66 @@ class UserRepositoryImpl @Inject constructor(
 
             // Nếu có kết nối mạng, thử tìm kiếm trên server
             if (connectionChecker.isNetworkAvailable()) {
-                Log.e(TAG, "🚨 Network available, trying server search")
+                Log.d(TAG, "🌐 Network available, trying server search")
                 try {
-                    Log.e(TAG, "🚨 Calling API: searchUsers('$query')")
+                    Log.d(TAG, "🌐 Calling API: searchUsers('$query')")
 
                     // Kiểm tra URL endpoint
                     val apiUrl = "users/search?query=$query"
-                    Log.e(TAG, "🚨 API URL: $apiUrl")
+                    Log.d(TAG, "🌐 API URL: $apiUrl")
 
                     // Kiểm tra token xác thực
                     val token = runBlocking { dataStoreManager.authToken.first() }
-                    Log.e(TAG, "🚨 Auth token available: ${!token.isNullOrEmpty()}")
+                    Log.d(TAG, "🔑 Auth token available: ${!token.isNullOrEmpty()}")
 
                     val response = apiService.searchUsers(query)
-                    Log.e(TAG, "🚨 API response code: ${response.code()}")
+                    Log.d(TAG, "🌐 API response code: ${response.code()}")
 
                     if (response.isSuccessful) {
-                        Log.e(TAG, "🚨 API call successful")
+                        Log.d(TAG, "✅ API call successful")
                         val responseBody = response.body()
                         if (responseBody != null) {
-                            // Xử lý cả hai trường hợp: API trả về danh sách users hoặc một user duy nhất
-                            val usersList = if (responseBody.user != null) {
-                                // Nếu API trả về một user duy nhất trong trường "user"
-                                Log.e(TAG, "🚨 Server returned a single user in 'user' field")
-                                listOf(responseBody.user)
-                            } else {
-                                // Nếu API trả về danh sách users trong trường "users"
-                                responseBody.users
-                            }
-
-                            Log.e(TAG, "🚨 Server results count: ${usersList.size}")
-                            Log.e(TAG, "🚨 Server response total: ${responseBody.total}")
-                            Log.e(TAG, "🚨 Server response message: ${responseBody.message}")
-                            Log.e(TAG, "🚨 Server response status: ${responseBody.status}")
+                            Log.d(TAG, "📊 Server results count: ${responseBody.size}")
 
                             // Log chi tiết từng kết quả từ server
-                            usersList.forEachIndexed { index, userResponse ->
-                                Log.e(TAG, "🚨 Server result #${index + 1}: id=${userResponse.id}, name='${userResponse.name}', email='${userResponse.email}'")
+                            responseBody.forEachIndexed { index, userResponse ->
+                                Log.d(TAG, "📝 Server result #${index + 1}: id=${userResponse.id}, name='${userResponse.name}', email='${userResponse.email}'")
                             }
 
-                            val serverResults = usersList.map { it.toDomainModel() }
-                            Log.e(TAG, "🚨 Server results after mapping: ${serverResults.size}")
-
-                            // Lưu kết quả từ server vào cơ sở dữ liệu cục bộ
-                            try {
-                                Log.e(TAG, "🚨 Saving server results to local database")
-                                serverResults.forEach { user ->
-                                    // Kiểm tra xem người dùng đã tồn tại trong cơ sở dữ liệu cục bộ chưa
-                                    val existingUser = userDao.getUserById(user.id)
-                                    if (existingUser == null) {
-                                        Log.e(TAG, "🚨 Saving user to local database: id=${user.id}, name='${user.name}', email='${user.email}'")
-                                        userDao.insertUser(user.toEntity())
-                                    } else {
-                                        Log.e(TAG, "🚨 User already exists in local database: id=${user.id}, name='${user.name}', email='${user.email}'")
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "🚨 Error saving server results to local database", e)
-                            }
+                            val serverResults = responseBody.map { it.toDomainModel() }
+                            Log.d(TAG, "📊 Server results after mapping: ${serverResults.size}")
 
                             // Kết hợp kết quả từ local và server, loại bỏ trùng lặp và giới hạn số lượng
                             val combinedResults = (localResults + serverResults)
                                 .distinctBy { it.id }
                                 .take(limit)
-                            Log.e(TAG, "🚨 Combined results after deduplication: ${combinedResults.size}")
+                            Log.d(TAG, "📊 Combined results after deduplication: ${combinedResults.size}")
                             return combinedResults
                         } else {
-                            Log.e(TAG, "🚨 API response body is null")
+                            Log.e(TAG, "❌ API response body is null")
                         }
                     } else {
-                        Log.e(TAG, "🚨 API call failed with code: ${response.code()}")
+                        Log.e(TAG, "❌ API call failed with code: ${response.code()}")
                         try {
                             val errorBody = response.errorBody()?.string()
-                            Log.e(TAG, "🚨 Error body: $errorBody")
+                            Log.e(TAG, "❌ Error body: $errorBody")
                         } catch (e: Exception) {
-                            Log.e(TAG, "🚨 Could not read error body", e)
+                            Log.e(TAG, "❌ Could not read error body", e)
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "🚨 Error searching users from server", e)
-                    Log.e(TAG, "🚨 Exception details: ${e.message}", e)
-                    Log.e(TAG, "🚨 Exception stack trace: ${e.stackTraceToString()}")
+                    Log.e(TAG, "❌ Error searching users from server", e)
+                    Log.e(TAG, "❌ Exception details: ${e.message}", e)
                     // Nếu có lỗi khi tìm kiếm từ server, vẫn trả về kết quả từ local
                 }
             } else {
-                Log.e(TAG, "🚨 No network connection, using only local results")
+                Log.d(TAG, "📵 No network connection, using only local results")
             }
 
-            Log.e(TAG, "🚨 Returning local results: ${localResults.size}")
+            Log.d(TAG, "✅ Returning local results: ${localResults.size}")
             return localResults
         } catch (e: Exception) {
-            Log.e(TAG, "🚨 Error searching users", e)
-            Log.e(TAG, "🚨 Exception details: ${e.message}")
-            Log.e(TAG, "🚨 Exception stack trace: ${e.stackTraceToString()}")
+            Log.e(TAG, "❌ Error searching users", e)
             return emptyList()
         }
     }

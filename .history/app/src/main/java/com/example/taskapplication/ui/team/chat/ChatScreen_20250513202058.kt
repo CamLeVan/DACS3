@@ -248,15 +248,6 @@ fun ChatScreen(
                 .padding(paddingValues)
         ) {
             when (val state = messagesState) {
-                null -> {
-                    // Loading state
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
                 is MessagesState.Loading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),

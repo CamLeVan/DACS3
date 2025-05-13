@@ -36,17 +36,8 @@ interface UserDao {
      * @param limit Số lượng kết quả tối đa
      * @return Danh sách người dùng phù hợp với query
      */
-    @Query("SELECT * FROM users WHERE name LIKE '%' || :query || '%' OR email LIKE '%' || :query || '%' LIMIT :limit")
+    @Query("SELECT * FROM users WHERE LOWER(name) LIKE '%' || LOWER(:query) || '%' OR LOWER(email) LIKE '%' || LOWER(:query) || '%' LIMIT :limit")
     suspend fun searchUsers(query: String, limit: Int = 10): List<UserEntity>
-
-    /**
-     * Tìm kiếm người dùng theo tên hoặc email (phiên bản chính xác)
-     * @param query Chuỗi tìm kiếm chính xác (tên hoặc email)
-     * @param limit Số lượng kết quả tối đa
-     * @return Danh sách người dùng phù hợp với query
-     */
-    @Query("SELECT * FROM users WHERE email = :query OR name = :query LIMIT :limit")
-    suspend fun searchUsersExact(query: String, limit: Int = 10): List<UserEntity>
 
     /**
      * Lấy danh sách người dùng phổ biến dựa trên số lần tương tác
