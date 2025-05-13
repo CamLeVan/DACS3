@@ -437,25 +437,17 @@ fun EnhancedInviteMemberDialog(
 
                     // Invite button
                     GradientButton(
-                        text = if (inviteState is InviteState.Loading) "Đang mời..." else "Mời",
+                        text = "Invite",
                         onClick = { onInvite(email.trim()) },
                         enabled = email.isNotBlank() && inviteState !is InviteState.Loading,
                         modifier = Modifier.weight(1f),
                         gradient = Brush.linearGradient(
-                            colors = if (email.isNotBlank() && inviteState !is InviteState.Loading) {
-                                listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.tertiary
-                                )
-                            } else {
-                                listOf(
-                                    Color.Gray.copy(alpha = 0.5f),
-                                    Color.Gray.copy(alpha = 0.7f)
-                                )
-                            }
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.tertiary
+                            )
                         ),
-                        cornerRadius = RoundedCornerShape(12.dp),
-                        showLoading = inviteState is InviteState.Loading
+                        cornerRadius = RoundedCornerShape(12.dp)
                     )
                 }
             }

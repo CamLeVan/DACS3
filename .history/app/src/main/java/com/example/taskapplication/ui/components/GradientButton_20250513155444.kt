@@ -50,7 +50,6 @@ import com.example.taskapplication.ui.theme.LocalExtendedColorScheme
  * @param cornerRadius Bo góc của nút
  * @param height Chiều cao của nút
  * @param gradient Gradient cho nút (mặc định lấy từ theme)
- * @param showLoading Hiển thị trạng thái đang tải (thay thế icon bằng CircularProgressIndicator)
  * @param content Nội dung tùy chỉnh của nút (mặc định là văn bản)
  */
 @Composable
@@ -160,16 +159,14 @@ fun IconButton(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    showLoading: Boolean = false
+    enabled: Boolean = true
 ) {
     GradientButton(
         text = text,
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        icon = icon,
-        showLoading = showLoading
+        icon = icon
     )
 }
 
@@ -181,16 +178,14 @@ fun AddButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    showLoading: Boolean = false
+    enabled: Boolean = true
 ) {
     IconButton(
         text = text,
         icon = Icons.Default.Add,
         onClick = onClick,
         modifier = modifier,
-        enabled = enabled,
-        showLoading = showLoading
+        enabled = enabled
     )
 }
 
@@ -203,8 +198,7 @@ fun SmallGradientButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    icon: ImageVector? = null,
-    showLoading: Boolean = false
+    icon: ImageVector? = null
 ) {
     GradientButton(
         text = text,
@@ -213,7 +207,6 @@ fun SmallGradientButton(
         enabled = enabled,
         icon = icon,
         cornerRadius = RoundedCornerShape(8.dp),
-        height = 40,
-        showLoading = showLoading
+        height = 40
     )
 }

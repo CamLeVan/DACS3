@@ -628,6 +628,7 @@ class DocumentViewModel @Inject constructor(
                     )
                 }
             }
+            }
         }
     }
 

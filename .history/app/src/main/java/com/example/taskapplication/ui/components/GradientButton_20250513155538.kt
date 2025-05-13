@@ -50,7 +50,6 @@ import com.example.taskapplication.ui.theme.LocalExtendedColorScheme
  * @param cornerRadius Bo góc của nút
  * @param height Chiều cao của nút
  * @param gradient Gradient cho nút (mặc định lấy từ theme)
- * @param showLoading Hiển thị trạng thái đang tải (thay thế icon bằng CircularProgressIndicator)
  * @param content Nội dung tùy chỉnh của nút (mặc định là văn bản)
  */
 @Composable

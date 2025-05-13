@@ -592,7 +592,7 @@ class DocumentViewModel @Inject constructor(
                         is Resource.Success -> {
                             _documentListState.update {
                                 it.copy(
-                                    documents = result.data,
+                                    documents = result.data ?: emptyList(),
                                     isLoading = false,
                                     error = null
                                 )
@@ -627,6 +627,7 @@ class DocumentViewModel @Inject constructor(
                         error = "Lỗi khi tìm kiếm: ${e.message}"
                     )
                 }
+            }
             }
         }
     }

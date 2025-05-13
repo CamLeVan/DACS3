@@ -91,7 +91,7 @@ class DocumentViewModel @Inject constructor(
                     is Resource.Success -> {
                         _documentListState.update {
                             it.copy(
-                                documents = result.data,
+                                documents = result.data ?: emptyList(),
                                 isLoading = false,
                                 error = null
                             )
@@ -107,6 +107,9 @@ class DocumentViewModel @Inject constructor(
                     }
                     is Resource.Loading -> {
                         _documentListState.update { it.copy(isLoading = true) }
+                    }
+                    else -> {
+                        // Không xử lý các trường hợp khác
                     }
                 }
             }
@@ -125,7 +128,7 @@ class DocumentViewModel @Inject constructor(
                     is Resource.Success -> {
                         _folderState.update {
                             it.copy(
-                                folders = result.data,
+                                folders = result.data ?: emptyList(),
                                 isLoading = false,
                                 error = null
                             )
@@ -141,6 +144,9 @@ class DocumentViewModel @Inject constructor(
                     }
                     is Resource.Loading -> {
                         _folderState.update { it.copy(isLoading = true) }
+                    }
+                    else -> {
+                        // Không xử lý các trường hợp khác
                     }
                 }
             }
@@ -178,9 +184,6 @@ class DocumentViewModel @Inject constructor(
                     is Resource.Loading -> {
                         _documentDetailState.update { it.copy(isLoading = true) }
                     }
-                    else -> {
-                        // Không xử lý các trường hợp khác
-                    }
                 }
             }
         }
@@ -198,8 +201,11 @@ class DocumentViewModel @Inject constructor(
                             it.copy(versions = result.data)
                         }
                     }
-                    else -> {
+                    is Resource.Error -> {
                         // Không cập nhật error state vì đây là thông tin phụ
+                    }
+                    is Resource.Loading -> {
+                        // Không cập nhật loading state vì đây là thông tin phụ
                     }
                 }
             }
@@ -214,7 +220,7 @@ class DocumentViewModel @Inject constructor(
             _documentListState.update { it.copy(isLoading = true, error = null) }
 
             val document = Document(
-                id = java.util.UUID.randomUUID().toString(),
+                id = UuidGenerator.generate(),
                 name = name,
                 description = description,
                 teamId = currentTeamId,
@@ -244,9 +250,6 @@ class DocumentViewModel @Inject constructor(
                 is Resource.Loading -> {
                     _documentListState.update { it.copy(isLoading = true) }
                 }
-                else -> {
-                    // Không xử lý các trường hợp khác
-                }
             }
         }
     }
@@ -272,9 +275,6 @@ class DocumentViewModel @Inject constructor(
                 }
                 is Resource.Loading -> {
                     _documentDetailState.update { it.copy(isLoading = true) }
-                }
-                else -> {
-                    // Không xử lý các trường hợp khác
                 }
             }
         }
@@ -333,9 +333,6 @@ class DocumentViewModel @Inject constructor(
                         is Resource.Loading -> {
                             // Already set loading state
                         }
-                        else -> {
-                            // Không xử lý các trường hợp khác
-                        }
                     }
                 }
             }
@@ -364,9 +361,6 @@ class DocumentViewModel @Inject constructor(
                 is Resource.Loading -> {
                     _documentListState.update { it.copy(isLoading = true) }
                 }
-                else -> {
-                    // Không xử lý các trường hợp khác
-                }
             }
         }
     }
@@ -386,7 +380,7 @@ class DocumentViewModel @Inject constructor(
             _documentDetailState.update { it.copy(isLoading = true, error = null) }
 
             val version = DocumentVersion(
-                id = java.util.UUID.randomUUID().toString(),
+                id = UuidGenerator.generate(),
                 documentId = documentId,
                 versionNumber = _documentDetailState.value.versions.size + 1,
                 fileUrl = "",
@@ -411,9 +405,6 @@ class DocumentViewModel @Inject constructor(
                 is Resource.Loading -> {
                     _documentDetailState.update { it.copy(isLoading = true) }
                 }
-                else -> {
-                    // Không xử lý các trường hợp khác
-                }
             }
         }
     }
@@ -426,7 +417,7 @@ class DocumentViewModel @Inject constructor(
             _folderState.update { it.copy(isLoading = true, error = null) }
 
             val folder = DocumentFolder(
-                id = java.util.UUID.randomUUID().toString(),
+                id = UuidGenerator.generate(),
                 name = name,
                 description = description,
                 teamId = currentTeamId,
@@ -450,9 +441,6 @@ class DocumentViewModel @Inject constructor(
                 }
                 is Resource.Loading -> {
                     _folderState.update { it.copy(isLoading = true) }
-                }
-                else -> {
-                    // Không xử lý các trường hợp khác
                 }
             }
         }
@@ -480,9 +468,6 @@ class DocumentViewModel @Inject constructor(
                 is Resource.Loading -> {
                     _folderState.update { it.copy(isLoading = true) }
                 }
-                else -> {
-                    // Không xử lý các trường hợp khác
-                }
             }
         }
     }
@@ -508,9 +493,6 @@ class DocumentViewModel @Inject constructor(
                 }
                 is Resource.Loading -> {
                     _folderState.update { it.copy(isLoading = true) }
-                }
-                else -> {
-                    // Không xử lý các trường hợp khác
                 }
             }
         }
@@ -585,47 +567,38 @@ class DocumentViewModel @Inject constructor(
                 return@launch
             }
 
-            try {
-                // Sử dụng repository để tìm kiếm
-                getDocumentsUseCase.searchDocuments(currentTeamId, query).collectLatest { result ->
-                    when (result) {
-                        is Resource.Success -> {
-                            _documentListState.update {
-                                it.copy(
-                                    documents = result.data,
-                                    isLoading = false,
-                                    error = null
-                                )
-                            }
-                        }
-                        is Resource.Error -> {
-                            // Xử lý thông báo lỗi cụ thể cho tìm kiếm
-                            val errorMessage = when {
-                                result.message.contains("network", ignoreCase = true) ->
-                                    "Không thể tìm kiếm: Không có kết nối mạng."
-                                query.length < 2 ->
-                                    "Vui lòng nhập ít nhất 2 ký tự để tìm kiếm."
-                                else -> "Không thể tìm kiếm: ${result.message}"
-                            }
-
-                            _documentListState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    error = errorMessage
-                                )
-                            }
-                        }
-                        is Resource.Loading -> {
-                            _documentListState.update { it.copy(isLoading = true) }
+            // Sử dụng repository để tìm kiếm
+            getDocumentsUseCase.searchDocuments(currentTeamId, query).collectLatest { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        _documentListState.update {
+                            it.copy(
+                                documents = result.data,
+                                isLoading = false,
+                                error = null
+                            )
                         }
                     }
-                }
-            } catch (e: Exception) {
-                _documentListState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Lỗi khi tìm kiếm: ${e.message}"
-                    )
+                    is Resource.Error -> {
+                        // Xử lý thông báo lỗi cụ thể cho tìm kiếm
+                        val errorMessage = when {
+                            result.message.contains("network", ignoreCase = true) ->
+                                "Không thể tìm kiếm: Không có kết nối mạng."
+                            query.length < 2 ->
+                                "Vui lòng nhập ít nhất 2 ký tự để tìm kiếm."
+                            else -> "Không thể tìm kiếm: ${result.message}"
+                        }
+
+                        _documentListState.update {
+                            it.copy(
+                                isLoading = false,
+                                error = errorMessage
+                            )
+                        }
+                    }
+                    is Resource.Loading -> {
+                        _documentListState.update { it.copy(isLoading = true) }
+                    }
                 }
             }
         }
@@ -643,8 +616,11 @@ class DocumentViewModel @Inject constructor(
                             it.copy(permissions = result.data)
                         }
                     }
-                    else -> {
+                    is Resource.Error -> {
                         // Không cập nhật error state vì đây là thông tin phụ
+                    }
+                    is Resource.Loading -> {
+                        // Không cập nhật loading state vì đây là thông tin phụ
                     }
                 }
             }
@@ -659,7 +635,7 @@ class DocumentViewModel @Inject constructor(
             _documentDetailState.update { it.copy(isLoading = true, error = null) }
 
             val permission = DocumentPermission(
-                id = java.util.UUID.randomUUID().toString(),
+                id = UuidGenerator.generate(),
                 documentId = documentId,
                 userId = userId,
                 permissionType = permissionType,
@@ -680,7 +656,7 @@ class DocumentViewModel @Inject constructor(
                         )
                     }
                 }
-                else -> {
+                is Resource.Loading -> {
                     _documentDetailState.update { it.copy(isLoading = true) }
                 }
             }
@@ -707,7 +683,7 @@ class DocumentViewModel @Inject constructor(
                         )
                     }
                 }
-                else -> {
+                is Resource.Loading -> {
                     _documentDetailState.update { it.copy(isLoading = true) }
                 }
             }
@@ -733,7 +709,7 @@ class DocumentViewModel @Inject constructor(
                     is Resource.Error -> {
                         callback(Result.failure(Exception(result.message)))
                     }
-                    else -> {
+                    is Resource.Loading -> {
                         // Ignore loading state
                     }
                 }

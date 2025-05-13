@@ -342,8 +342,7 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             messageRepository.removeReaction(messageId, reactionId)
                 .onFailure { e ->
-                    // Hiển thị thông báo lỗi nếu cần
-                    _sendMessageState.value = SendMessageState.Error(e.message ?: "Không thể xóa biểu cảm khỏi tin nhắn")
+                    // Handle error if needed
                 }
         }
     }

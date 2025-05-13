@@ -624,7 +624,7 @@ class DocumentRepositoryImpl @Inject constructor(
 
                                 // Cập nhật thông tin từ server
                                 val serverId = response.data.id
-                                documentVersionDao.updateVersionSyncStatus(version.id, "synced", serverId.toString())
+                                documentVersionDao.updateVersionSyncStatus(version.id, "synced", serverId)
                             } else {
                                 // Không tìm thấy file, đánh dấu lỗi
                                 documentVersionDao.updateVersionSyncStatus(version.id, "error", null)
@@ -656,7 +656,7 @@ class DocumentRepositoryImpl @Inject constructor(
 
                             // Cập nhật trạng thái đồng bộ
                             val serverId = response.data.id
-                            documentPermissionDao.updatePermissionSyncStatus(permission.id, "synced", serverId.toString())
+                            documentPermissionDao.updatePermissionSyncStatus(permission.id, "synced", serverId)
                         }
                     } catch (e: Exception) {
                         // Ghi log lỗi và tiếp tục với quyền tiếp theo

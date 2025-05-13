@@ -264,7 +264,7 @@ fun ChatScreen(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             Text(
-                                text = "Đang tải tin nhắn...",
+                                text = "Loading messages...",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                             )
@@ -301,7 +301,7 @@ fun ChatScreen(
                             Spacer(modifier = Modifier.height(24.dp))
 
                             Text(
-                                text = "Chưa có tin nhắn nào",
+                                text = "No messages yet",
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
@@ -311,7 +311,7 @@ fun ChatScreen(
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                text = "Bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn cho nhóm của bạn",
+                                text = "Start the conversation by sending a message to your team",
                                 style = MaterialTheme.typography.bodyLarge,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
@@ -688,7 +688,7 @@ fun MessageItem(
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "Đang gửi...",
+                                        text = "Sending...",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = textColor.copy(alpha = 0.5f)
                                     )
@@ -714,7 +714,7 @@ fun MessageItem(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = "Xóa",
+                    text = "Delete",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier
@@ -762,7 +762,7 @@ fun MessageInput(
                         .padding(8.dp)
                 ) {
                     Text(
-                        text = "Chọn biểu tượng cảm xúc",
+                        text = "Emoji Picker",
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(8.dp)
                     )
@@ -860,7 +860,7 @@ fun MessageInput(
                 onValueChange = onValueChange,
                 placeholder = {
                     Text(
-                        "Nhập tin nhắn",
+                        "Type a message",
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                 },

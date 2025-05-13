@@ -195,7 +195,7 @@ class DocumentViewModel @Inject constructor(
                 when (result) {
                     is Resource.Success -> {
                         _documentDetailState.update {
-                            it.copy(versions = result.data)
+                            it.copy(versions = result.data ?: emptyList())
                         }
                     }
                     else -> {
@@ -592,7 +592,7 @@ class DocumentViewModel @Inject constructor(
                         is Resource.Success -> {
                             _documentListState.update {
                                 it.copy(
-                                    documents = result.data,
+                                    documents = result.data ?: emptyList(),
                                     isLoading = false,
                                     error = null
                                 )
@@ -628,6 +628,7 @@ class DocumentViewModel @Inject constructor(
                     )
                 }
             }
+            }
         }
     }
 
@@ -640,7 +641,7 @@ class DocumentViewModel @Inject constructor(
                 when (result) {
                     is Resource.Success -> {
                         _documentDetailState.update {
-                            it.copy(permissions = result.data)
+                            it.copy(permissions = result.data ?: emptyList())
                         }
                     }
                     else -> {

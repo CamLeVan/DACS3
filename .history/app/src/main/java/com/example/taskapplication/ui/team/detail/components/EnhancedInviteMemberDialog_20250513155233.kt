@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -371,44 +370,26 @@ fun EnhancedInviteMemberDialog(
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
-                    Box(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .padding(vertical = 8.dp)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Success",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Success",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
 
-                            Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
 
-                            Column {
-                                Text(
-                                    text = "Lời mời đã được gửi thành công!",
-                                    color = MaterialTheme.colorScheme.primary,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-                                )
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                Text(
-                                    text = "Người dùng sẽ nhận được thông báo về lời mời của bạn.",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
+                        Text(
+                            text = "Invitation sent successfully!",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
 
@@ -437,25 +418,17 @@ fun EnhancedInviteMemberDialog(
 
                     // Invite button
                     GradientButton(
-                        text = if (inviteState is InviteState.Loading) "Đang mời..." else "Mời",
+                        text = "Invite",
                         onClick = { onInvite(email.trim()) },
                         enabled = email.isNotBlank() && inviteState !is InviteState.Loading,
                         modifier = Modifier.weight(1f),
                         gradient = Brush.linearGradient(
-                            colors = if (email.isNotBlank() && inviteState !is InviteState.Loading) {
-                                listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.tertiary
-                                )
-                            } else {
-                                listOf(
-                                    Color.Gray.copy(alpha = 0.5f),
-                                    Color.Gray.copy(alpha = 0.7f)
-                                )
-                            }
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.tertiary
+                            )
                         ),
-                        cornerRadius = RoundedCornerShape(12.dp),
-                        showLoading = inviteState is InviteState.Loading
+                        cornerRadius = RoundedCornerShape(12.dp)
                     )
                 }
             }

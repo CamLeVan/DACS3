@@ -656,7 +656,7 @@ class DocumentRepositoryImpl @Inject constructor(
 
                             // Cập nhật trạng thái đồng bộ
                             val serverId = response.data.id
-                            documentPermissionDao.updatePermissionSyncStatus(permission.id, "synced", serverId.toString())
+                            documentPermissionDao.updatePermissionSyncStatus(permission.id, "synced", serverId)
                         }
                     } catch (e: Exception) {
                         // Ghi log lỗi và tiếp tục với quyền tiếp theo

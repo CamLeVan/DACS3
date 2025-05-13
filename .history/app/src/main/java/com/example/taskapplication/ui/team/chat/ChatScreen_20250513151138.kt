@@ -301,7 +301,7 @@ fun ChatScreen(
                             Spacer(modifier = Modifier.height(24.dp))
 
                             Text(
-                                text = "Chưa có tin nhắn nào",
+                                text = "No messages yet",
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
@@ -311,7 +311,7 @@ fun ChatScreen(
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                text = "Bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn cho nhóm của bạn",
+                                text = "Start the conversation by sending a message to your team",
                                 style = MaterialTheme.typography.bodyLarge,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)

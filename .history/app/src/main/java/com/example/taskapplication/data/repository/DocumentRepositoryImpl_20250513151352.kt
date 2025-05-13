@@ -10,10 +10,8 @@ import com.example.taskapplication.data.mapper.toEntity
 import com.example.taskapplication.data.remote.ApiService
 import com.example.taskapplication.data.remote.api.DocumentApiService
 import com.example.taskapplication.data.remote.dto.toDomain
-import com.example.taskapplication.data.remote.request.CreateDocumentRequest
 import com.example.taskapplication.data.remote.request.CreateDocumentVersionRequest
 import com.example.taskapplication.data.remote.request.CreateDocumentPermissionRequest
-import com.example.taskapplication.data.remote.request.UpdateDocumentRequest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -550,20 +548,17 @@ class DocumentRepositoryImpl @Inject constructor(
                             val filePart = MultipartBody.Part.createFormData("file", file.name, requestBody)
 
                             // Gọi API để tạo tài liệu
-                            val createRequest = CreateDocumentRequest(
+                            val response = documentApiService.createDocument(
                                 teamId = document.teamId,
                                 name = document.name,
                                 description = document.description ?: "",
-                                folderId = document.folderId
-                            )
-                            val response = documentApiService.createDocument(
-                                request = createRequest,
+                                folderId = document.folderId,
                                 file = filePart
                             )
 
                             // Cập nhật thông tin từ server
                             val serverId = response.data.id
-                            documentDao.updateDocumentSyncStatus(document.id, "synced", serverId.toString())
+                            documentDao.updateDocumentSyncStatus(document.id, "synced", serverId)
                         } else {
                             // Không tìm thấy file, đánh dấu lỗi
                             documentDao.updateDocumentSyncStatus(document.id, "error", null)
@@ -579,13 +574,10 @@ class DocumentRepositoryImpl @Inject constructor(
                 for (document in pendingUpdateDocuments) {
                     try {
                         // Cập nhật tài liệu trên server
-                        val updateRequest = UpdateDocumentRequest(
-                            name = document.name,
-                            description = document.description ?: ""
-                        )
                         val response = documentApiService.updateDocument(
                             documentId = document.serverId ?: document.id,
-                            request = updateRequest
+                            name = document.name,
+                            description = document.description ?: ""
                         )
 
                         // Cập nhật trạng thái đồng bộ
@@ -624,7 +616,7 @@ class DocumentRepositoryImpl @Inject constructor(
 
                                 // Cập nhật thông tin từ server
                                 val serverId = response.data.id
-                                documentVersionDao.updateVersionSyncStatus(version.id, "synced", serverId.toString())
+                                documentVersionDao.updateVersionSyncStatus(version.id, "synced", serverId)
                             } else {
                                 // Không tìm thấy file, đánh dấu lỗi
                                 documentVersionDao.updateVersionSyncStatus(version.id, "error", null)
@@ -656,7 +648,7 @@ class DocumentRepositoryImpl @Inject constructor(
 
                             // Cập nhật trạng thái đồng bộ
                             val serverId = response.data.id
-                            documentPermissionDao.updatePermissionSyncStatus(permission.id, "synced", serverId.toString())
+                            documentPermissionDao.updatePermissionSyncStatus(permission.id, "synced", serverId)
                         }
                     } catch (e: Exception) {
                         // Ghi log lỗi và tiếp tục với quyền tiếp theo

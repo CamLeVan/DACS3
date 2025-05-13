@@ -91,7 +91,7 @@ class DocumentViewModel @Inject constructor(
                     is Resource.Success -> {
                         _documentListState.update {
                             it.copy(
-                                documents = result.data,
+                                documents = result.data ?: emptyList(),
                                 isLoading = false,
                                 error = null
                             )
@@ -107,6 +107,9 @@ class DocumentViewModel @Inject constructor(
                     }
                     is Resource.Loading -> {
                         _documentListState.update { it.copy(isLoading = true) }
+                    }
+                    else -> {
+                        // Không xử lý các trường hợp khác
                     }
                 }
             }
@@ -125,7 +128,7 @@ class DocumentViewModel @Inject constructor(
                     is Resource.Success -> {
                         _folderState.update {
                             it.copy(
-                                folders = result.data,
+                                folders = result.data ?: emptyList(),
                                 isLoading = false,
                                 error = null
                             )
@@ -141,6 +144,9 @@ class DocumentViewModel @Inject constructor(
                     }
                     is Resource.Loading -> {
                         _folderState.update { it.copy(isLoading = true) }
+                    }
+                    else -> {
+                        // Không xử lý các trường hợp khác
                     }
                 }
             }
@@ -195,11 +201,14 @@ class DocumentViewModel @Inject constructor(
                 when (result) {
                     is Resource.Success -> {
                         _documentDetailState.update {
-                            it.copy(versions = result.data)
+                            it.copy(versions = result.data ?: emptyList())
                         }
                     }
-                    else -> {
+                    is Resource.Error -> {
                         // Không cập nhật error state vì đây là thông tin phụ
+                    }
+                    is Resource.Loading -> {
+                        // Không cập nhật loading state vì đây là thông tin phụ
                     }
                 }
             }
@@ -592,7 +601,7 @@ class DocumentViewModel @Inject constructor(
                         is Resource.Success -> {
                             _documentListState.update {
                                 it.copy(
-                                    documents = result.data,
+                                    documents = result.data ?: emptyList(),
                                     isLoading = false,
                                     error = null
                                 )
@@ -628,6 +637,7 @@ class DocumentViewModel @Inject constructor(
                     )
                 }
             }
+            }
         }
     }
 
@@ -640,11 +650,14 @@ class DocumentViewModel @Inject constructor(
                 when (result) {
                     is Resource.Success -> {
                         _documentDetailState.update {
-                            it.copy(permissions = result.data)
+                            it.copy(permissions = result.data ?: emptyList())
                         }
                     }
-                    else -> {
+                    is Resource.Error -> {
                         // Không cập nhật error state vì đây là thông tin phụ
+                    }
+                    is Resource.Loading -> {
+                        // Không cập nhật loading state vì đây là thông tin phụ
                     }
                 }
             }
@@ -680,7 +693,7 @@ class DocumentViewModel @Inject constructor(
                         )
                     }
                 }
-                else -> {
+                is Resource.Loading -> {
                     _documentDetailState.update { it.copy(isLoading = true) }
                 }
             }
@@ -707,7 +720,7 @@ class DocumentViewModel @Inject constructor(
                         )
                     }
                 }
-                else -> {
+                is Resource.Loading -> {
                     _documentDetailState.update { it.copy(isLoading = true) }
                 }
             }
@@ -733,7 +746,7 @@ class DocumentViewModel @Inject constructor(
                     is Resource.Error -> {
                         callback(Result.failure(Exception(result.message)))
                     }
-                    else -> {
+                    is Resource.Loading -> {
                         // Ignore loading state
                     }
                 }
