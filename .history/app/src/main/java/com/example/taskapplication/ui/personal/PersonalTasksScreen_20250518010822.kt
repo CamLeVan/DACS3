@@ -1,0 +1,503 @@
+package com.example.taskapplication.ui.personal
+
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.taskapplication.R
+import com.example.taskapplication.ui.animation.AnimationUtils
+import com.example.taskapplication.ui.components.EmptyStateView
+import com.example.taskapplication.ui.components.ErrorStateView
+import com.example.taskapplication.ui.theme.ButtonGradientEnd
+import com.example.taskapplication.ui.theme.ButtonGradientStart
+import com.example.taskapplication.ui.theme.LocalExtendedColorScheme
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/**
+ * Màn hình hiển thị danh sách công việc cá nhân với giao diện hiện đại
+ * @param viewModel ViewModel quản lý trạng thái và logic
+ * @param onTaskClick Callback khi nhấn vào một công việc
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PersonalTasksScreen(
+    viewModel: PersonalTasksViewModel = hiltViewModel(),
+    onTaskClick: (String) -> Unit
+) {
+    val tasksState by viewModel.tasks.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val showAddDialog by viewModel.showAddDialog.collectAsState()
+    val showFilterDialog by viewModel.showFilterDialog.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val filterStatus by viewModel.filterStatus.collectAsState()
+    val filterPriority by viewModel.filterPriority.collectAsState()
+    val filterDueDateStart by viewModel.filterDueDateStart.collectAsState()
+    val filterDueDateEnd by viewModel.filterDueDateEnd.collectAsState()
+    val currentPage by viewModel.currentPage.collectAsState()
+    val hasMorePages by viewModel.hasMorePages.collectAsState()
+    val totalPages by viewModel.totalPages.collectAsState()
+
+    val extendedColorScheme = LocalExtendedColorScheme.current
+
+    // Kiểm tra xem có bộ lọc nào đang hoạt động không
+    val hasActiveFilters = filterStatus != null || filterPriority != null ||
+                          filterDueDateStart != null || filterDueDateEnd != null ||
+                          searchQuery.isNotEmpty()
+
+    // Theo dõi số lượng công việc đang chờ đồng bộ và trạng thái đồng bộ
+    val pendingSyncCount by viewModel.pendingSyncCount.collectAsState()
+    val syncState by viewModel.syncState.collectAsState()
+
+    // State cho LazyColumn
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    val showScrollToTop by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 5 }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = stringResource(R.string.personal_tasks),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                ),
+                actions = {
+                    // Nút đồng bộ với hiệu ứng hiện đại
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primaryContainer,
+                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
+                                    )
+                                )
+                            )
+                            .border(
+                                width = 1.dp,
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable {
+                                // Hiển thị thông báo thay vì gọi syncTasks
+                                viewModel.showSyncDisabledMessage()
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = stringResource(R.string.sync),
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            )
+        },
+        floatingActionButton = {
+            // FAB với thiết kế hiện đại
+            Box(
+                modifier = Modifier
+                    .shadow(
+                        elevation = 6.dp,
+                        shape = CircleShape,
+                        spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                    )
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                ButtonGradientStart,
+                                ButtonGradientEnd
+                            )
+                        )
+                    )
+                    .border(
+                        width = 1.dp,
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.2f),
+                                Color.White.copy(alpha = 0.1f)
+                            )
+                        ),
+                        shape = CircleShape
+                    )
+                    .clickable { viewModel.showAddTaskDialog() }
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = stringResource(R.string.add_task),
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Thanh tìm kiếm
+            // Hiển thị thông báo đồng bộ
+            AnimatedVisibility(
+                visible = syncState != PersonalTasksViewModel.SyncState.None,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            when (syncState) {
+                                is PersonalTasksViewModel.SyncState.Success -> MaterialTheme.colorScheme.primaryContainer
+                                is PersonalTasksViewModel.SyncState.Error -> MaterialTheme.colorScheme.errorContainer
+                                else -> MaterialTheme.colorScheme.surface
+                            }
+                        )
+                        .padding(8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = when (syncState) {
+                            is PersonalTasksViewModel.SyncState.Success -> "Đồng bộ thành công"
+                            is PersonalTasksViewModel.SyncState.Error -> "Lỗi đồng bộ: ${(syncState as PersonalTasksViewModel.SyncState.Error).message}"
+                            else -> ""
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = when (syncState) {
+                            is PersonalTasksViewModel.SyncState.Success -> MaterialTheme.colorScheme.primary
+                            is PersonalTasksViewModel.SyncState.Error -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Thanh tìm kiếm
+                SearchBar(
+                    query = searchQuery,
+                    onQueryChange = { /* Không làm gì khi thay đổi, chỉ khi nhấn tìm kiếm */ },
+                    onSearch = { query -> viewModel.searchTasks(query) },
+                    onFilterClick = { viewModel.showFilterDialog() },
+                    hasActiveFilters = hasActiveFilters,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Nút đồng bộ với badge hiển thị số lượng công việc đang chờ đồng bộ
+                if (pendingSyncCount > 0) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { viewModel.showSyncDisabledMessage() }
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .padding(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Sync,
+                                contentDescription = "Đồng bộ",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = pendingSyncCount.toString(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Nội dung chính
+            Box(
+                modifier = Modifier.weight(1f)
+            ) {
+                SwipeRefresh(
+                    state = rememberSwipeRefreshState(isRefreshing),
+                    onRefresh = { viewModel.syncTasks() },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    val state = tasksState
+
+                    // Sử dụng Box thay vì AnimatedVisibility để tránh lỗi
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        // Loading state
+                        if (state is PersonalTasksViewModel.TasksState.Loading) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    // Rotating animation for loading indicator
+                                    val rotation = rememberInfiniteTransition().animateFloat(
+                                        initialValue = 0f,
+                                        targetValue = 360f,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(1500, easing = LinearEasing),
+                                            repeatMode = RepeatMode.Restart
+                                        ),
+                                        label = "Loading Rotation"
+                                    )
+
+                                    CircularProgressIndicator(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .graphicsLayer { rotationZ = rotation.value }
+                                    )
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    // Pulsating text animation
+                                    val scale = rememberInfiniteTransition().animateFloat(
+                                        initialValue = 0.95f,
+                                        targetValue = 1.05f,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(1000, easing = FastOutSlowInEasing),
+                                            repeatMode = RepeatMode.Reverse
+                                        ),
+                                        label = "Text Pulse"
+                                    )
+
+                                    Text(
+                                        text = "Đang tải công việc...",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                        modifier = Modifier.graphicsLayer { scaleX = scale.value; scaleY = scale.value }
+                                    )
+                                }
+                            }
+                        }
+
+                        // Empty state
+                        if (state is PersonalTasksViewModel.TasksState.Success && state.tasks.isEmpty()) {
+                            EmptyStateView(
+                                message = if (hasActiveFilters)
+                                    "Không tìm thấy công việc nào phù hợp với bộ lọc"
+                                else
+                                    stringResource(R.string.empty_tasks),
+                                icon = Icons.Default.Info
+                            )
+                        }
+
+                        // Success state with task list
+                        if (state is PersonalTasksViewModel.TasksState.Success && state.tasks.isNotEmpty()) {
+                            Column {
+                                // Hiển thị thông báo khi không có kết nối mạng
+                                if (!hasMorePages && hasActiveFilters) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+                                            .padding(8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "Đang hiển thị dữ liệu cục bộ",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(bottom = 16.dp)
+                                ) {
+                                    item {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+
+                                    itemsIndexed(
+                                        items = state.tasks,
+                                        key = { _, task -> task.id }
+                                    ) { index, task ->
+                                        // Sử dụng key và modifier thay vì AnimatedVisibility
+                                        TaskItem(
+                                            task = task,
+                                            onClick = { onTaskClick(task.id) },
+                                            onCompleteClick = { viewModel.toggleTaskCompletion(task) },
+                                            modifier = Modifier
+                                        )
+                                    }
+                                }
+
+                                // Điều khiển phân trang
+                                if (hasMorePages) {
+                                    SimpleLoadMoreButton(
+                                        hasMorePages = hasMorePages,
+                                        onLoadMore = { viewModel.loadNextPage() }
+                                    )
+                                }
+                            }
+                        }
+
+                        // Error state
+                        if (state is PersonalTasksViewModel.TasksState.Error) {
+                            ErrorStateView(
+                                message = stringResource(R.string.error_loading_tasks, state.message),
+                                onRetryClick = {
+                                    if (hasActiveFilters) {
+                                        viewModel.clearFilters()
+                                    } else {
+                                        viewModel.loadTasks()
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Nút cuộn lên đầu trang
+                if (showScrollToTop) {
+                    FloatingActionButton(
+                        onClick = {
+                            // Cuộn lên đầu trang
+                            coroutineScope.launch {
+                                listState.animateScrollToItem(0)
+                            }
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 16.dp)
+                            .shadow(4.dp, RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                    ) {
+                        Text(
+                            text = "Lên đầu trang",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // Show add task dialog if necessary
+    AnimatedVisibility(
+        visible = showAddDialog,
+        enter = AnimationUtils.dialogEnterAnimation,
+        exit = AnimationUtils.dialogExitAnimation
+    ) {
+        AddTaskDialog(
+            onDismiss = { viewModel.hideAddTaskDialog() },
+            onTaskCreated = { task -> viewModel.createTask(task) }
+        )
+    }
+
+    // Show filter dialog if necessary
+    AnimatedVisibility(
+        visible = showFilterDialog,
+        enter = AnimationUtils.dialogEnterAnimation,
+        exit = AnimationUtils.dialogExitAnimation
+    ) {
+        FilterDialog(
+            onDismiss = { viewModel.hideFilterDialog() },
+            onApplyFilter = { status, priority, dueDateStart, dueDateEnd ->
+                viewModel.filterTasks(status, priority, dueDateStart, dueDateEnd)
+            },
+            onClearFilter = { viewModel.clearFilters() },
+            initialStatus = filterStatus,
+            initialPriority = filterPriority,
+            initialDueDateStart = filterDueDateStart,
+            initialDueDateEnd = filterDueDateEnd
+        )
+    }
+}
