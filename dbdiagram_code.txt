@@ -1,0 +1,188 @@
+// Biểu đồ ERD đơn giản hóa cho ứng dụng Quản lý Nhiệm vụ và Chat Nhóm
+// Sử dụng cho dbdiagram.io
+
+// Bảng User
+Table User {
+  id varchar [pk, note: "UUID String"]
+  name varchar
+  email varchar
+  avatar varchar
+  serverId varchar
+  syncStatus varchar [note: "synced, pending_update"]
+  lastModified bigint
+  createdAt bigint
+}
+
+// Bảng PersonalTask
+Table PersonalTask {
+  id varchar [pk, note: "UUID String"]
+  title varchar
+  description varchar
+  dueDate bigint
+  priority int
+  isCompleted boolean
+  serverId varchar
+  syncStatus varchar [note: "synced, pending_create, pending_update, pending_delete"]
+  lastModified bigint
+  createdAt bigint
+}
+
+// Bảng Team
+Table Team {
+  id varchar [pk, note: "UUID String"]
+  name varchar
+  description varchar
+  ownerId varchar [ref: > User.id]
+  createdBy varchar
+  serverId varchar
+  syncStatus varchar [note: "synced, pending_create, pending_update, pending_delete"]
+  lastModified bigint
+  createdAt bigint
+}
+
+// Bảng TeamMember
+Table TeamMember {
+  id varchar [pk, note: "UUID String"]
+  teamId varchar [ref: > Team.id]
+  userId varchar [ref: > User.id]
+  role varchar [note: "admin, member, etc."]
+  joinedAt bigint
+  invitedBy varchar
+  serverId varchar
+  syncStatus varchar [note: "synced, pending_create, pending_update, pending_delete"]
+  lastModified bigint
+  createdAt bigint
+}
+
+// Bảng Message
+Table Message {
+  id varchar [pk, note: "UUID String"]
+  teamId varchar [ref: > Team.id]
+  senderId varchar [ref: > User.id]
+  content varchar
+  timestamp bigint
+  serverId varchar
+  syncStatus varchar [note: "synced, pending"]
+  lastModified bigint
+  createdAt bigint
+  isDeleted boolean
+  isRead boolean
+  clientTempId varchar
+}
+
+// Bảng TeamInvitation
+Table TeamInvitation {
+  id varchar [pk, note: "UUID String"]
+  teamId varchar [ref: > Team.id]
+  teamName varchar
+  email varchar
+  role varchar
+  status varchar [note: "pending, accepted, rejected, cancelled"]
+  token varchar
+  createdAt bigint
+  expiresAt bigint
+  serverId varchar
+  syncStatus varchar
+  lastModified bigint
+}
+
+// Bảng TeamTask
+Table TeamTask {
+  id varchar [pk, note: "UUID String"]
+  teamId varchar [ref: > Team.id]
+  title varchar
+  description varchar
+  assignedUserId varchar [ref: > User.id]
+  dueDate bigint
+  priority int
+  isCompleted boolean
+  serverId varchar
+  syncStatus varchar [note: "synced, pending_create, pending_update, pending_delete"]
+  lastModified bigint
+  createdAt bigint
+}
+
+// Bảng KanbanBoard
+Table KanbanBoard {
+  id varchar [pk, note: "UUID String"]
+  name varchar
+  teamId varchar [ref: > Team.id]
+  serverId varchar
+  syncStatus varchar
+  lastModified bigint
+}
+
+// Bảng KanbanColumn
+Table KanbanColumn {
+  id varchar [pk, note: "UUID String"]
+  name varchar
+  boardId varchar [ref: > KanbanBoard.id]
+  order int
+  serverId varchar
+  syncStatus varchar
+  lastModified bigint
+}
+
+// Bảng KanbanTask
+Table KanbanTask {
+  id varchar [pk, note: "UUID String"]
+  columnId varchar [ref: > KanbanColumn.id]
+  assignedToId varchar [ref: > User.id]
+  title varchar
+  description varchar
+  dueDate bigint
+  priority int
+  serverId varchar
+  syncStatus varchar
+  lastModified bigint
+}
+
+// Bảng Document
+Table Document {
+  id varchar [pk, note: "UUID String"]
+  name varchar
+  description varchar
+  teamId varchar [ref: > Team.id]
+  fileUrl varchar
+  fileType varchar
+  fileSize bigint
+  uploadedBy varchar [ref: > User.id]
+  uploadedAt bigint
+  lastModified bigint
+  accessLevel varchar [note: "public, team, private, specific_users"]
+  syncStatus varchar [note: "pending, synced"]
+  isDeleted boolean
+  serverId varchar
+  latestVersionId varchar
+}
+
+// Bảng DocumentVersion
+Table DocumentVersion {
+  id varchar [pk, note: "UUID String"]
+  documentId varchar [ref: > Document.id]
+  versionNumber int
+  fileUrl varchar
+  fileSize bigint
+  uploadedBy varchar [ref: > User.id]
+  uploadedAt bigint
+  changeNotes varchar
+  syncStatus varchar [note: "pending, synced"]
+  serverId varchar
+}
+
+// Bảng Attachment
+Table Attachment {
+  id varchar [pk, note: "UUID String"]
+  messageId varchar [ref: > Message.id]
+  fileName varchar
+  fileSize bigint
+  fileType varchar
+  url varchar
+  serverId varchar
+  syncStatus varchar [note: "synced, pending"]
+  createdAt bigint
+}
+
+// Định nghĩa các mối quan hệ bổ sung
+Ref: User.id < PersonalTask.id
+Ref: Team.id < Document.id

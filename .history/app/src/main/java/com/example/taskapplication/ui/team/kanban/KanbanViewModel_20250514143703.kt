@@ -165,18 +165,9 @@ class KanbanViewModel @Inject constructor(
         columnId: String
     ) {
         viewModelScope.launch {
-            kanbanRepository.createTask(
-                columnId = columnId,
-                title = title,
-                description = description,
-                dueDate = dueDate,
-                priority = priority,
-                assignedUserId = assignedUserId
-            ).onSuccess {
-                // Task created successfully, board will be updated via Flow
-            }.onFailure { e ->
-                // Handle error if needed
-            }
+            // TODO: Implement creating a task
+            // For now, just reload the board
+            loadKanbanBoard()
         }
     }
 

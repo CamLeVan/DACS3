@@ -137,14 +137,7 @@ private val DarkExtendedColorScheme = ExtendedColorScheme(
     cardBorderGradient = Brush.horizontalGradient(listOf(PrimaryDark.copy(alpha = 0.2f), SecondaryDark.copy(alpha = 0.2f))),
     accentGradient = Brush.horizontalGradient(listOf(AccentBlue.copy(alpha = 0.8f), AccentGreen.copy(alpha = 0.8f))),
     surfaceElevated = Color(0xFF2D2D2D),
-    surfaceElevatedDark = Color(0xFF3D3D3D),
-    // Màu sắc cho các cột Kanban trong chế độ tối
-    todoColumn = Color(0xFF7986CB), // Tím xanh nhạt
-    inProgressColumn = Color(0xFF64B5F6), // Xanh dương nhạt
-    doneColumn = Color(0xFF81C784), // Xanh lá nhạt
-    // Màu sắc cho các thẻ nhiệm vụ trong chế độ tối
-    taskCardGradient = Brush.verticalGradient(listOf(Color(0xFF2D2D2D), Color(0xFF252525))),
-    taskCardBorder = Color(0xFF3D3D3D)
+    surfaceElevatedDark = Color(0xFF3D3D3D)
 )
 
 // Lược đồ màu mở rộng cho chế độ sáng
@@ -165,14 +158,7 @@ private val LightExtendedColorScheme = ExtendedColorScheme(
     cardBorderGradient = Brush.horizontalGradient(listOf(Primary.copy(alpha = 0.1f), Secondary.copy(alpha = 0.1f))),
     accentGradient = Brush.horizontalGradient(listOf(AccentBlue, AccentGreen)),
     surfaceElevated = Color(0xFFFAFAFA),
-    surfaceElevatedDark = Color(0xFF2D2D2D),
-    // Màu sắc cho các cột Kanban trong chế độ sáng
-    todoColumn = Color(0xFF5E6AD2), // Tím xanh
-    inProgressColumn = Color(0xFF4776E6), // Xanh dương
-    doneColumn = Color(0xFF66BB6A), // Xanh lá
-    // Màu sắc cho các thẻ nhiệm vụ trong chế độ sáng
-    taskCardGradient = Brush.verticalGradient(listOf(Color.White, Color(0xFFF8F9FF))),
-    taskCardBorder = Color(0xFFEEEEEE)
+    surfaceElevatedDark = Color(0xFF2D2D2D)
 )
 
 @Composable

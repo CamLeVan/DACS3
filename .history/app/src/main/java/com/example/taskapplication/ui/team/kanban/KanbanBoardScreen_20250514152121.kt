@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.animateItemPlacement
 import com.example.taskapplication.ui.team.kanban.components.CreateTaskDialog
 import com.example.taskapplication.ui.team.kanban.components.KanbanColumn
 import com.example.taskapplication.ui.team.kanban.components.TaskFilterDialog
@@ -305,6 +306,7 @@ fun KanbanBoardScreen(
                                     },
                                     modifier = Modifier
                                         .width(300.dp)
+                                        .animateItemPlacement()
                                 )
                             }
                         }

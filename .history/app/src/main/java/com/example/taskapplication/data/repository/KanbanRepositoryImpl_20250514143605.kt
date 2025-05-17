@@ -345,7 +345,7 @@ class KanbanRepositoryImpl @Inject constructor(
                         KanbanUser(
                             id = user.id,
                             name = user.name,
-                            avatar = user.avatar
+                            avatar = user.avatarUrl
                         )
                     } else null
                 } else null,

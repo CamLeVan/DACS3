@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.animateItemPlacement
 import com.example.taskapplication.ui.team.kanban.components.CreateTaskDialog
 import com.example.taskapplication.ui.team.kanban.components.KanbanColumn
 import com.example.taskapplication.ui.team.kanban.components.TaskFilterDialog
@@ -63,7 +64,7 @@ import com.example.taskapplication.ui.team.kanban.components.TaskFilterDialog
 /**
  * Screen that displays a kanban board for team tasks
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KanbanBoardScreen(
     viewModel: KanbanViewModel = hiltViewModel(),
@@ -305,6 +306,7 @@ fun KanbanBoardScreen(
                                     },
                                     modifier = Modifier
                                         .width(300.dp)
+                                        .animateItemPlacement()
                                 )
                             }
                         }

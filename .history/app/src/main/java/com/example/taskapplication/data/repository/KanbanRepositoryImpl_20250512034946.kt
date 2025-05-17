@@ -6,18 +6,15 @@ import com.example.taskapplication.data.api.request.MoveTaskRequest
 import com.example.taskapplication.data.database.dao.KanbanBoardDao
 import com.example.taskapplication.data.database.dao.KanbanColumnDao
 import com.example.taskapplication.data.database.dao.KanbanTaskDao
-import com.example.taskapplication.data.database.dao.UserDao
 import com.example.taskapplication.data.mapper.*
 import com.example.taskapplication.data.util.ConnectionChecker
 import com.example.taskapplication.domain.model.KanbanBoard
 import com.example.taskapplication.domain.model.KanbanColumn
 import com.example.taskapplication.domain.model.KanbanTask
-import com.example.taskapplication.domain.model.KanbanUser
 import com.example.taskapplication.domain.repository.KanbanRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import java.io.IOException
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,7 +23,6 @@ class KanbanRepositoryImpl @Inject constructor(
     private val kanbanBoardDao: KanbanBoardDao,
     private val kanbanColumnDao: KanbanColumnDao,
     private val kanbanTaskDao: KanbanTaskDao,
-    private val userDao: UserDao,
     private val apiService: ApiService,
     private val connectionChecker: ConnectionChecker
 ) : KanbanRepository {
@@ -48,7 +44,7 @@ class KanbanRepositoryImpl @Inject constructor(
                                         column.toDomainModel(tasks.map { it.toDomainModel() })
                                     }
                             }
-
+                            
                             if (columnFlows.isEmpty()) {
                                 flowOf(board.toDomainModel(emptyList()))
                             } else {
@@ -71,12 +67,12 @@ class KanbanRepositoryImpl @Inject constructor(
         try {
             // Get the task
             val task = kanbanTaskDao.getTaskById(taskId) ?: return Result.failure(IOException("Task not found"))
-
+            
             // Get the current column tasks
             val currentColumnTasks = kanbanTaskDao.getTasksByColumn(task.columnId).first()
                 .filter { it.id != taskId }
                 .sortedBy { it.position }
-
+            
             // Get the target column tasks
             val targetColumnTasks = if (task.columnId == columnId) {
                 currentColumnTasks
@@ -84,7 +80,7 @@ class KanbanRepositoryImpl @Inject constructor(
                 kanbanTaskDao.getTasksByColumn(columnId).first()
                     .sortedBy { it.position }
             }
-
+            
             // Update the task
             val updatedTask = task.copy(
                 columnId = columnId,
@@ -92,7 +88,7 @@ class KanbanRepositoryImpl @Inject constructor(
                 syncStatus = "pending_update",
                 lastModified = System.currentTimeMillis()
             )
-
+            
             // Update positions of other tasks in the target column
             val updatedTargetTasks = targetColumnTasks.mapIndexed { index, columnTask ->
                 if (index < position) {
@@ -105,27 +101,27 @@ class KanbanRepositoryImpl @Inject constructor(
                     )
                 }
             }
-
+            
             // Save changes to database
             kanbanTaskDao.updateTask(updatedTask)
             kanbanTaskDao.updateTaskPositions(updatedTargetTasks)
-
+            
             // If online, sync with server
             if (connectionChecker.isNetworkAvailable()) {
                 try {
                     val request = MoveTaskRequest(columnId, position)
                     val response = apiService.moveKanbanTask(teamId, taskId, request)
-
+                    
                     if (response.isSuccessful && response.body() != null) {
                         val serverTask = response.body()!!
-
+                        
                         // Update task with server data
                         val finalTask = updatedTask.copy(
                             syncStatus = "synced",
                             lastModified = System.currentTimeMillis()
                         )
                         kanbanTaskDao.updateTask(finalTask)
-
+                        
                         return Result.success(finalTask.toDomainModel())
                     }
                 } catch (e: Exception) {
@@ -133,7 +129,7 @@ class KanbanRepositoryImpl @Inject constructor(
                     // Continue with local update
                 }
             }
-
+            
             return Result.success(updatedTask.toDomainModel())
         } catch (e: Exception) {
             Log.e(TAG, "Error moving task", e)
@@ -145,27 +141,27 @@ class KanbanRepositoryImpl @Inject constructor(
         if (!connectionChecker.isNetworkAvailable()) {
             return Result.failure(IOException("No network connection"))
         }
-
+        
         try {
             // Get kanban board from server
             val response = apiService.getKanbanBoard(teamId)
-
+            
             if (response.isSuccessful && response.body() != null) {
                 val serverBoard = response.body()!!
-
+                
                 // Check if board exists locally
                 val localBoards = kanbanBoardDao.getBoardsByTeam(teamId).first()
                 val localBoard = if (localBoards.isNotEmpty()) localBoards.first() else null
-
+                
                 if (localBoard == null) {
                     // Create new board
                     val board = serverBoard.toDomainModel().copy(teamId = teamId)
                     kanbanBoardDao.insertBoard(board.toEntity())
-
+                    
                     // Create columns
                     for (column in board.columns) {
                         kanbanColumnDao.insertColumn(column.toEntity(board.id))
-
+                        
                         // Create tasks
                         for (task in column.tasks) {
                             kanbanTaskDao.insertTask(task.toEntity(column.id))
@@ -180,22 +176,22 @@ class KanbanRepositoryImpl @Inject constructor(
                         lastModified = System.currentTimeMillis()
                     )
                     kanbanBoardDao.updateBoard(updatedBoard)
-
+                    
                     // Process columns
                     val serverColumns = serverBoard.columns
                     val localColumns = kanbanColumnDao.getColumnsByBoard(localBoard.id).first()
-
+                    
                     // Map server columns to local columns by name
                     val columnMap = localColumns.associateBy { it.name }
-
+                    
                     for (serverColumn in serverColumns) {
                         val localColumn = columnMap[serverColumn.name]
-
+                        
                         if (localColumn == null) {
                             // Create new column
                             val column = serverColumn.toDomainModel()
                             kanbanColumnDao.insertColumn(column.toEntity(localBoard.id))
-
+                            
                             // Create tasks
                             for (task in column.tasks) {
                                 kanbanTaskDao.insertTask(task.toEntity(column.id))
@@ -210,17 +206,17 @@ class KanbanRepositoryImpl @Inject constructor(
                                 lastModified = System.currentTimeMillis()
                             )
                             kanbanColumnDao.updateColumn(updatedColumn)
-
+                            
                             // Process tasks
                             val serverTasks = serverColumn.tasks
                             val localTasks = kanbanTaskDao.getTasksByColumn(localColumn.id).first()
-
+                            
                             // Map server tasks to local tasks by title
                             val taskMap = localTasks.associateBy { it.title }
-
+                            
                             for (serverTask in serverTasks) {
                                 val localTask = taskMap[serverTask.title]
-
+                                
                                 if (localTask == null) {
                                     // Create new task
                                     val task = serverTask.toDomainModel()
@@ -246,7 +242,7 @@ class KanbanRepositoryImpl @Inject constructor(
                         }
                     }
                 }
-
+                
                 return Result.success(Unit)
             } else {
                 return Result.failure(IOException("Failed to get kanban board: ${response.code()}"))
@@ -256,7 +252,7 @@ class KanbanRepositoryImpl @Inject constructor(
             return Result.failure(e)
         }
     }
-
+    
     // Helper function to parse date
     private fun parseDate(dateString: String): Long {
         return try {
@@ -264,103 +260,6 @@ class KanbanRepositoryImpl @Inject constructor(
             format.parse(dateString)?.time ?: System.currentTimeMillis()
         } catch (e: Exception) {
             System.currentTimeMillis()
-        }
-    }
-
-    override suspend fun createBoard(
-        teamId: String,
-        name: String,
-        columns: List<String>
-    ): Result<KanbanBoard> {
-        try {
-            // Tạo board mới
-            val boardId = UUID.randomUUID().toString()
-            val board = KanbanBoard(
-                id = boardId,
-                name = name,
-                teamId = teamId,
-                columns = emptyList(),
-                syncStatus = "pending_create",
-                lastModified = System.currentTimeMillis()
-            )
-
-            // Lưu board vào database
-            kanbanBoardDao.insertBoard(board.toEntity())
-
-            // Tạo các cột
-            val createdColumns = columns.mapIndexed { index, columnName ->
-                val columnId = UUID.randomUUID().toString()
-                val column = KanbanColumn(
-                    id = columnId,
-                    name = columnName,
-                    order = index,
-                    tasks = emptyList(),
-                    syncStatus = "pending_create",
-                    lastModified = System.currentTimeMillis()
-                )
-
-                // Lưu cột vào database
-                kanbanColumnDao.insertColumn(column.toEntity(boardId))
-
-                column
-            }
-
-            // Trả về board với các cột đã tạo
-            return Result.success(board.copy(columns = createdColumns))
-        } catch (e: Exception) {
-            Log.e(TAG, "Error creating kanban board", e)
-            return Result.failure(e)
-        }
-    }
-
-    override suspend fun createTask(
-        columnId: String,
-        title: String,
-        description: String,
-        dueDate: Long?,
-        priority: String,
-        assignedUserId: String?
-    ): Result<KanbanTask> {
-        try {
-            // Lấy thông tin về cột
-            val column = kanbanColumnDao.getColumnById(columnId) ?:
-                return Result.failure(IllegalArgumentException("Column not found"))
-
-            // Lấy số lượng task hiện tại trong cột để xác định vị trí
-            val tasksInColumn = kanbanTaskDao.getTasksByColumnSync(columnId)
-            val position = tasksInColumn.size
-
-            // Tạo task mới
-            val taskId = UUID.randomUUID().toString()
-            val task = KanbanTask(
-                id = taskId,
-                title = title,
-                description = description,
-                priority = priority,
-                dueDate = dueDate,
-                assignedTo = if (assignedUserId != null) {
-                    // Lấy thông tin người dùng nếu có
-                    val user = userDao.getUserById(assignedUserId)
-                    if (user != null) {
-                        KanbanUser(
-                            id = user.id,
-                            name = user.name,
-                            avatar = user.avatar
-                        )
-                    } else null
-                } else null,
-                position = position,
-                syncStatus = "pending_create",
-                lastModified = System.currentTimeMillis()
-            )
-
-            // Lưu task vào database
-            kanbanTaskDao.insertTask(task.toEntity(columnId))
-
-            return Result.success(task)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error creating kanban task", e)
-            return Result.failure(e)
         }
     }
 }

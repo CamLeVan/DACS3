@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PriorityHigh
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -199,7 +198,11 @@ fun CreateTaskDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -531,68 +534,27 @@ fun CreateTaskDialog(
 
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
-            shape = RoundedCornerShape(24.dp),
-            colors = DatePickerDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                titleContentColor = MaterialTheme.colorScheme.primary,
-                headlineContentColor = MaterialTheme.colorScheme.onSurface,
-                weekdayContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                subheadContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                yearContentColor = MaterialTheme.colorScheme.onSurface,
-                currentYearContentColor = MaterialTheme.colorScheme.primary,
-                selectedYearContentColor = MaterialTheme.colorScheme.onPrimary,
-                selectedYearContainerColor = MaterialTheme.colorScheme.primary,
-                dayContentColor = MaterialTheme.colorScheme.onSurface,
-                selectedDayContentColor = MaterialTheme.colorScheme.onPrimary,
-                selectedDayContainerColor = MaterialTheme.colorScheme.primary,
-                todayContentColor = MaterialTheme.colorScheme.primary,
-                todayDateBorderColor = MaterialTheme.colorScheme.primary
-            ),
             confirmButton = {
-                Button(
+                TextButton(
                     onClick = {
                         datePickerState.selectedDateMillis?.let {
                             dueDate = it
                         }
                         showDatePicker = false
-                    },
-                    shape = RoundedCornerShape(12.dp)
+                    }
                 ) {
-                    Text(
-                        text = "Confirm",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium
-                        )
-                    )
+                    Text("OK")
                 }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showDatePicker = false },
-                    shape = RoundedCornerShape(12.dp)
+                    onClick = { showDatePicker = false }
                 ) {
-                    Text(
-                        text = "Cancel",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium
-                        )
-                    )
+                    Text("Cancel")
                 }
             }
         ) {
-            DatePicker(
-                state = datePickerState,
-                showModeToggle = true,
-                title = {
-                    Text(
-                        text = "Select Due Date",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp)
-                    )
-                }
-            )
+            DatePicker(state = datePickerState)
         }
     }
 }

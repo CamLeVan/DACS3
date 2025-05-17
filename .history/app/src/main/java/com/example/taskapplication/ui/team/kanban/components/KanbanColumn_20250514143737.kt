@@ -1,24 +1,16 @@
 package com.example.taskapplication.ui.team.kanban.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -29,11 +21,9 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,15 +31,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.taskapplication.domain.model.KanbanColumn
 import com.example.taskapplication.domain.model.KanbanTask
-import com.example.taskapplication.ui.theme.LocalExtendedColorScheme
 import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.rememberReorderableLazyListState
@@ -68,99 +55,41 @@ fun KanbanColumn(
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
-    // Calculate column statistics
-    val completedTasks by remember(column.tasks) {
-        derivedStateOf {
-            column.tasks.count { it.priority == "LOW" } // Giả sử priority LOW là đã hoàn thành
-        }
-    }
-
-    val progress by remember(column.tasks) {
-        derivedStateOf {
-            if (column.tasks.isEmpty()) 0f else completedTasks.toFloat() / column.tasks.size
-        }
-    }
-
-    // Determine column color based on name
-    val columnColor = when (column.name) {
-        "To Do" -> LocalExtendedColorScheme.current.todoColumn
-        "In Progress" -> LocalExtendedColorScheme.current.inProgressColumn
-        "Done" -> LocalExtendedColorScheme.current.doneColumn
-        else -> MaterialTheme.colorScheme.primaryContainer
-    }
-
-    // Animated elevation for better visual feedback
-    val elevation by animateDpAsState(
-        targetValue = if (showMenu) 8.dp else 4.dp,
-        animationSpec = tween(durationMillis = 300),
-        label = "Card Elevation Animation"
-    )
-
     Card(
-        modifier = modifier
-            .shadow(
-                elevation = elevation,
-                shape = RoundedCornerShape(16.dp),
-                spotColor = columnColor.copy(alpha = 0.5f)
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(16.dp)
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
-                        )
-                    )
-                )
-                .border(
-                    width = 1.dp,
-                    color = columnColor.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(12.dp)
+                .padding(8.dp)
         ) {
-            // Column header with colored accent
-            Row(
+            // Column header
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(bottom = 8.dp)
             ) {
-                // Colored circle indicator
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .background(columnColor)
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
                 Text(
                     text = column.name,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold
                     ),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 8.dp)
                 )
 
-                Box {
-                    IconButton(
-                        onClick = { showMenu = true },
-                        modifier = Modifier.size(32.dp)
-                    ) {
+                Box(
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                ) {
+                    IconButton(onClick = { showMenu = true }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Column Options",
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            contentDescription = "Column Options"
                         )
                     }
 
@@ -171,7 +100,7 @@ fun KanbanColumn(
                         DropdownMenuItem(
                             text = { Text("Add Task") },
                             onClick = {
-                                onAddTask(column.id)
+                                // TODO: Implement add task to column
                                 showMenu = false
                             }
                         )
@@ -195,64 +124,36 @@ fun KanbanColumn(
                 }
             }
 
-            // Progress indicator and task count
-            Column(
+            // Task count badge
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = "${column.tasks.size} tasks",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Text(
-                        text = "${(progress * 100).toInt()}%",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp)),
-                    color = columnColor,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Tasks list with drag-and-drop
             if (column.tasks.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
-                                )
-                            )
-                        )
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(12.dp)
-                        )
+                        .height(100.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -293,35 +194,22 @@ fun KanbanColumn(
                 }
             }
 
-            // Add task button - enhanced with gradient background
+            // Add task button
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                columnColor.copy(alpha = 0.1f),
-                                columnColor.copy(alpha = 0.2f)
-                            )
-                        )
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = columnColor.copy(alpha = 0.3f),
-                        shape = RoundedCornerShape(8.dp)
-                    ),
-                contentAlignment = Alignment.Center
+                    .padding(top = 8.dp)
             ) {
                 IconButton(
-                    onClick = { onAddTask(column.id) },
-                    modifier = Modifier.padding(4.dp)
+                    onClick = {
+                        // TODO: Implement add task to column
+                    },
+                    modifier = Modifier.align(Alignment.Center)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Add Task",
-                        tint = columnColor
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }

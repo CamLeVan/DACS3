@@ -59,7 +59,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun kanbanBoardDao(): KanbanBoardDao
     abstract fun kanbanColumnDao(): KanbanColumnDao
     abstract fun kanbanTaskDao(): KanbanTaskDao
-    abstract fun teamRoleHistoryDao(): com.example.taskapplication.data.local.dao.TeamRoleHistoryDao
+    abstract fun teamRoleHistoryDao(): TeamRoleHistoryDao
     abstract fun teamDocumentDao(): TeamDocumentDao
     abstract fun documentFolderDao(): DocumentFolderDao
     abstract fun documentDao(): DocumentDao

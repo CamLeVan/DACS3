@@ -35,22 +35,22 @@ class KanbanViewModel @Inject constructor(
     private val dataStoreManager: DataStoreManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-
+    
     // Team ID from navigation arguments
     private val teamId: String = checkNotNull(savedStateHandle.get<String>("teamId"))
-
+    
     // State for kanban board
     private val _kanbanState = MutableStateFlow<KanbanState>(KanbanState.Loading)
     val kanbanState: StateFlow<KanbanState> = _kanbanState
-
+    
     // State for team members
     private val _teamMembers = MutableStateFlow<List<TeamMember>>(emptyList())
     val teamMembers: StateFlow<List<TeamMember>> = _teamMembers
-
+    
     // Current filter
     private val _currentFilter = MutableStateFlow(TaskFilter())
     val currentFilter: StateFlow<TaskFilter> = _currentFilter
-
+    
     // Filtered kanban board
     val filteredKanbanState: StateFlow<KanbanState> = combine(
         kanbanState,
@@ -71,19 +71,19 @@ class KanbanViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = KanbanState.Loading
     )
-
+    
     init {
         loadKanbanBoard()
         loadTeamMembers()
     }
-
+    
     /**
      * Load kanban board for the team
      */
     fun loadKanbanBoard() {
         viewModelScope.launch {
             _kanbanState.value = KanbanState.Loading
-
+            
             kanbanRepository.getKanbanBoard(teamId)
                 .catch { e ->
                     _kanbanState.value = KanbanState.Error(e.message ?: "Unknown error")
@@ -102,7 +102,7 @@ class KanbanViewModel @Inject constructor(
                 }
         }
     }
-
+    
     /**
      * Load team members
      */
@@ -117,27 +117,18 @@ class KanbanViewModel @Inject constructor(
                 }
         }
     }
-
+    
     /**
      * Create a default kanban board with standard columns
      */
     private fun createDefaultBoard() {
         viewModelScope.launch {
-            _kanbanState.value = KanbanState.Loading
-
-            // Tạo bảng mặc định với 3 cột tiêu chuẩn
-            kanbanRepository.createBoard(
-                teamId = teamId,
-                name = "Team Kanban Board",
-                columns = listOf("To Do", "In Progress", "Done")
-            ).onSuccess { board ->
-                _kanbanState.value = KanbanState.Success(board)
-            }.onFailure { e ->
-                _kanbanState.value = KanbanState.Error(e.message ?: "Failed to create board")
-            }
+            // TODO: Implement creating a default board with standard columns
+            // For now, just show empty state
+            _kanbanState.value = KanbanState.Empty
         }
     }
-
+    
     /**
      * Move a task to a different column or position
      */
@@ -152,7 +143,7 @@ class KanbanViewModel @Inject constructor(
                 }
         }
     }
-
+    
     /**
      * Create a new task
      */
@@ -165,28 +156,19 @@ class KanbanViewModel @Inject constructor(
         columnId: String
     ) {
         viewModelScope.launch {
-            kanbanRepository.createTask(
-                columnId = columnId,
-                title = title,
-                description = description,
-                dueDate = dueDate,
-                priority = priority,
-                assignedUserId = assignedUserId
-            ).onSuccess {
-                // Task created successfully, board will be updated via Flow
-            }.onFailure { e ->
-                // Handle error if needed
-            }
+            // TODO: Implement creating a task
+            // For now, just reload the board
+            loadKanbanBoard()
         }
     }
-
+    
     /**
      * Apply filter to tasks
      */
     fun applyFilter(assignedUserId: String?, priority: String?, isCompleted: Boolean?) {
         _currentFilter.value = TaskFilter(assignedUserId, priority, isCompleted)
     }
-
+    
     /**
      * Apply filter to a kanban board
      */
@@ -194,28 +176,28 @@ class KanbanViewModel @Inject constructor(
         val filteredColumns = board.columns.map { column ->
             val filteredTasks = column.tasks.filter { task ->
                 var matches = true
-
+                
                 // Filter by assignee
                 if (filter.assignedUserId != null) {
                     matches = matches && task.assignedTo?.id == filter.assignedUserId
                 }
-
+                
                 // Filter by priority
                 if (filter.priority != null) {
                     matches = matches && task.priority == filter.priority
                 }
-
+                
                 // Filter by completion status
                 if (filter.isCompleted != null) {
                     // TODO: Implement completion status filtering when available
                 }
-
+                
                 matches
             }
-
+            
             column.copy(tasks = filteredTasks)
         }
-
+        
         return board.copy(columns = filteredColumns)
     }
 }

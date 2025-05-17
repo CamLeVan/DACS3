@@ -50,23 +50,4 @@ interface KanbanRepository {
         name: String,
         columns: List<String>
     ): Result<KanbanBoard>
-
-    /**
-     * Create a new task in a column
-     * @param columnId Column ID
-     * @param title Task title
-     * @param description Task description
-     * @param dueDate Due date (optional)
-     * @param priority Task priority
-     * @param assignedUserId User ID assigned to the task (optional)
-     * @return Result containing the created task or an error
-     */
-    suspend fun createTask(
-        columnId: String,
-        title: String,
-        description: String,
-        dueDate: Long?,
-        priority: String,
-        assignedUserId: String?
-    ): Result<KanbanTask>
 }

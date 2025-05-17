@@ -165,14 +165,7 @@ private val LightExtendedColorScheme = ExtendedColorScheme(
     cardBorderGradient = Brush.horizontalGradient(listOf(Primary.copy(alpha = 0.1f), Secondary.copy(alpha = 0.1f))),
     accentGradient = Brush.horizontalGradient(listOf(AccentBlue, AccentGreen)),
     surfaceElevated = Color(0xFFFAFAFA),
-    surfaceElevatedDark = Color(0xFF2D2D2D),
-    // Màu sắc cho các cột Kanban trong chế độ sáng
-    todoColumn = Color(0xFF5E6AD2), // Tím xanh
-    inProgressColumn = Color(0xFF4776E6), // Xanh dương
-    doneColumn = Color(0xFF66BB6A), // Xanh lá
-    // Màu sắc cho các thẻ nhiệm vụ trong chế độ sáng
-    taskCardGradient = Brush.verticalGradient(listOf(Color.White, Color(0xFFF8F9FF))),
-    taskCardBorder = Color(0xFFEEEEEE)
+    surfaceElevatedDark = Color(0xFF2D2D2D)
 )
 
 @Composable

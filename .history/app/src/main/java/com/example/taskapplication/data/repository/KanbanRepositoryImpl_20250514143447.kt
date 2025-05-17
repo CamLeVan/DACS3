@@ -6,7 +6,6 @@ import com.example.taskapplication.data.api.request.MoveTaskRequest
 import com.example.taskapplication.data.database.dao.KanbanBoardDao
 import com.example.taskapplication.data.database.dao.KanbanColumnDao
 import com.example.taskapplication.data.database.dao.KanbanTaskDao
-import com.example.taskapplication.data.database.dao.UserDao
 import com.example.taskapplication.data.mapper.*
 import com.example.taskapplication.data.util.ConnectionChecker
 import com.example.taskapplication.domain.model.KanbanBoard
@@ -26,7 +25,6 @@ class KanbanRepositoryImpl @Inject constructor(
     private val kanbanBoardDao: KanbanBoardDao,
     private val kanbanColumnDao: KanbanColumnDao,
     private val kanbanTaskDao: KanbanTaskDao,
-    private val userDao: UserDao,
     private val apiService: ApiService,
     private val connectionChecker: ConnectionChecker
 ) : KanbanRepository {
@@ -264,103 +262,6 @@ class KanbanRepositoryImpl @Inject constructor(
             format.parse(dateString)?.time ?: System.currentTimeMillis()
         } catch (e: Exception) {
             System.currentTimeMillis()
-        }
-    }
-
-    override suspend fun createBoard(
-        teamId: String,
-        name: String,
-        columns: List<String>
-    ): Result<KanbanBoard> {
-        try {
-            // Tạo board mới
-            val boardId = UUID.randomUUID().toString()
-            val board = KanbanBoard(
-                id = boardId,
-                name = name,
-                teamId = teamId,
-                columns = emptyList(),
-                syncStatus = "pending_create",
-                lastModified = System.currentTimeMillis()
-            )
-
-            // Lưu board vào database
-            kanbanBoardDao.insertBoard(board.toEntity())
-
-            // Tạo các cột
-            val createdColumns = columns.mapIndexed { index, columnName ->
-                val columnId = UUID.randomUUID().toString()
-                val column = KanbanColumn(
-                    id = columnId,
-                    name = columnName,
-                    order = index,
-                    tasks = emptyList(),
-                    syncStatus = "pending_create",
-                    lastModified = System.currentTimeMillis()
-                )
-
-                // Lưu cột vào database
-                kanbanColumnDao.insertColumn(column.toEntity(boardId))
-
-                column
-            }
-
-            // Trả về board với các cột đã tạo
-            return Result.success(board.copy(columns = createdColumns))
-        } catch (e: Exception) {
-            Log.e(TAG, "Error creating kanban board", e)
-            return Result.failure(e)
-        }
-    }
-
-    override suspend fun createTask(
-        columnId: String,
-        title: String,
-        description: String,
-        dueDate: Long?,
-        priority: String,
-        assignedUserId: String?
-    ): Result<KanbanTask> {
-        try {
-            // Lấy thông tin về cột
-            val column = kanbanColumnDao.getColumnById(columnId) ?:
-                return Result.failure(IllegalArgumentException("Column not found"))
-
-            // Lấy số lượng task hiện tại trong cột để xác định vị trí
-            val tasksInColumn = kanbanTaskDao.getTasksByColumnSync(columnId)
-            val position = tasksInColumn.size
-
-            // Tạo task mới
-            val taskId = UUID.randomUUID().toString()
-            val task = KanbanTask(
-                id = taskId,
-                title = title,
-                description = description,
-                priority = priority,
-                dueDate = dueDate,
-                assignedTo = if (assignedUserId != null) {
-                    // Lấy thông tin người dùng nếu có
-                    val user = userDao.getUserById(assignedUserId)
-                    if (user != null) {
-                        KanbanUser(
-                            id = user.id,
-                            name = user.name,
-                            avatar = user.avatar
-                        )
-                    } else null
-                } else null,
-                position = position,
-                syncStatus = "pending_create",
-                lastModified = System.currentTimeMillis()
-            )
-
-            // Lưu task vào database
-            kanbanTaskDao.insertTask(task.toEntity(columnId))
-
-            return Result.success(task)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error creating kanban task", e)
-            return Result.failure(e)
         }
     }
 }
